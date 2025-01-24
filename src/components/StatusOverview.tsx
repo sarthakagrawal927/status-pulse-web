@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Service } from "./ServiceCard";
+import { cn } from "@/lib/utils";
 
 interface StatusOverviewProps {
   services: Service[];
