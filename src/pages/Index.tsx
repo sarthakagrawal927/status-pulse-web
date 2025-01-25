@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ServiceCard, type Service } from "@/components/ServiceCard";
 import { StatusOverview } from "@/components/StatusOverview";
+import { OrganizationOverview } from "@/components/OrganizationOverview";
 
 const mockServices: Service[] = [
   {
@@ -33,17 +34,22 @@ const mockServices: Service[] = [
   },
 ];
 
+const mockOrganization = {
+  id: "1",
+  name: "Acme Corporation",
+  description: "Leading provider of cloud infrastructure and services",
+  website: "https://example.com",
+};
+
 const Index = () => {
   const [services] = useState<Service[]>(mockServices);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8">
-        <h1 className="text-4xl font-bold text-center mb-8">System Status</h1>
-        
         <div className="max-w-3xl mx-auto space-y-8">
+          <OrganizationOverview organization={mockOrganization} />
           <StatusOverview services={services} />
-          
           <div className="grid gap-4">
             {services.map((service) => (
               <ServiceCard key={service.id} service={service} />

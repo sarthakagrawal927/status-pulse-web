@@ -16,10 +16,12 @@ export const Navbar = () => {
               Sign Up
             </Button>
           </Link>
-          <Button variant="default" size="sm" className="gap-2">
-            <LogIn className="h-4 w-4" />
-            Login
-          </Button>
+          <Link to="/login">
+            <Button variant="default" size="sm" className="gap-2">
+              <LogIn className="h-4 w-4" />
+              Login
+            </Button>
+          </Link>
         </div>
       </div>
     </nav>
