@@ -2,18 +2,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { PlusCircle, Mail, Trash2 } from "lucide-react";
+import { PlusCircle, Mail, Trash2, Shield } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Member {
   id: string;
   email: string;
-  role: string;
+  role: "Admin" | "Editor" | "Viewer";
   joinedAt: string;
 }
 
 const Members = () => {
   const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [userRole] = useState<"Admin" | "Editor" | "Viewer">("Admin"); // This would come from auth context
   const [members] = useState<Member[]>([
     {
       id: "1",
@@ -24,7 +32,7 @@ const Members = () => {
     {
       id: "2",
       email: "jane@example.com",
-      role: "Member",
+      role: "Editor",
       joinedAt: "2024-01-15",
     },
   ]);
@@ -40,26 +48,40 @@ const Members = () => {
   };
 
   const handleRemoveMember = (email: string) => {
+    if (userRole !== "Admin") {
+      toast.error("Only admins can remove members");
+      return;
+    }
     toast.success(`Member ${email} removed`);
+  };
+
+  const handleRoleChange = (memberId: string, newRole: string) => {
+    if (userRole !== "Admin") {
+      toast.error("Only admins can change roles");
+      return;
+    }
+    toast.success(`Role updated successfully`);
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Team Members</h1>
-        <form onSubmit={handleInviteMember} className="flex gap-4">
-          <Input
-            type="email"
-            placeholder="Enter email address"
-            value={newMemberEmail}
-            onChange={(e) => setNewMemberEmail(e.target.value)}
-            className="w-64"
-          />
-          <Button type="submit">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Invite Member
-          </Button>
-        </form>
+        {userRole === "Admin" && (
+          <form onSubmit={handleInviteMember} className="flex gap-4">
+            <Input
+              type="email"
+              placeholder="Enter email address"
+              value={newMemberEmail}
+              onChange={(e) => setNewMemberEmail(e.target.value)}
+              className="w-64"
+            />
+            <Button type="submit">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Invite Member
+            </Button>
+          </form>
+        )}
       </div>
 
       <Table>
@@ -78,16 +100,44 @@ const Members = () => {
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 {member.email}
               </TableCell>
-              <TableCell>{member.role}</TableCell>
+              <TableCell>
+                {userRole === "Admin" ? (
+                  <Select
+                    defaultValue={member.role}
+                    onValueChange={(value) => handleRoleChange(member.id, value)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">
+                        <span className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Admin
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="Editor">Editor</SelectItem>
+                      <SelectItem value="Viewer">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    {member.role === "Admin" && <Shield className="h-4 w-4" />}
+                    {member.role}
+                  </span>
+                )}
+              </TableCell>
               <TableCell>{new Date(member.joinedAt).toLocaleDateString()}</TableCell>
               <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveMember(member.email)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                {userRole === "Admin" && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveMember(member.email)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}

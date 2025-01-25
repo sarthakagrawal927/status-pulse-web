@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import Members from "./pages/Members";
+import Incidents from "./pages/Incidents";
 import { Navbar } from "./components/Navbar";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/signup" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/members" element={<Members />} />
+          <Route path="/incidents" element={<Incidents />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
