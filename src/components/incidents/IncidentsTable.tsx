@@ -1,5 +1,10 @@
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Edit2, Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface Incident {
   id: string;
@@ -20,9 +25,13 @@ interface Service {
 interface IncidentsTableProps {
   incidents: Incident[];
   services: Service[];
+  onUpdateIncident: (updatedIncident: Incident) => void;
 }
 
-export const IncidentsTable = ({ incidents, services }: IncidentsTableProps) => {
+export const IncidentsTable = ({ incidents, services, onUpdateIncident }: IncidentsTableProps) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editedIncident, setEditedIncident] = useState<Incident | null>(null);
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       investigating: "bg-yellow-500",
@@ -34,6 +43,25 @@ export const IncidentsTable = ({ incidents, services }: IncidentsTableProps) => 
       completed: "bg-green-500",
     };
     return colors[status] || "bg-gray-500";
+  };
+
+  const handleSave = (incident: Incident) => {
+    if (editedIncident) {
+      onUpdateIncident(editedIncident);
+      setEditingId(null);
+      setEditedIncident(null);
+      toast.success("Incident updated successfully");
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditedIncident(null);
+  };
+
+  const startEditing = (incident: Incident) => {
+    setEditingId(incident.id);
+    setEditedIncident(incident);
   };
 
   // Group incidents by service
@@ -61,12 +89,24 @@ export const IncidentsTable = ({ incidents, services }: IncidentsTableProps) => 
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Last Update</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {serviceIncidents.map((incident) => (
                   <TableRow key={incident.id}>
-                    <TableCell className="font-medium">{incident.title}</TableCell>
+                    <TableCell className="font-medium">
+                      {editingId === incident.id ? (
+                        <Input
+                          value={editedIncident?.title}
+                          onChange={(e) =>
+                            setEditedIncident(prev => prev ? { ...prev, title: e.target.value } : null)
+                          }
+                        />
+                      ) : (
+                        incident.title
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={incident.type === "incident" ? "destructive" : "secondary"}>
                         {incident.type === "incident" ? "Incident" : "Maintenance"}
@@ -80,6 +120,26 @@ export const IncidentsTable = ({ incidents, services }: IncidentsTableProps) => 
                     </TableCell>
                     <TableCell>{new Date(incident.createdAt).toLocaleString()}</TableCell>
                     <TableCell>{new Date(incident.updatedAt).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {editingId === incident.id ? (
+                        <div className="flex gap-2">
+                          <Button size="icon" variant="ghost" onClick={handleCancel}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => handleSave(incident)}>
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => startEditing(incident)}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

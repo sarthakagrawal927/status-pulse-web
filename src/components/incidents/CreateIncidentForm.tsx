@@ -12,12 +12,18 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+interface Service {
+  id: string;
+  name: string;
+}
+
 interface CreateIncidentFormProps {
   onSubmit: (incident: any) => void;
   onClose: () => void;
+  services: Service[];
 }
 
-export const CreateIncidentForm = ({ onSubmit, onClose }: CreateIncidentFormProps) => {
+export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncidentFormProps) => {
   const [newIncident, setNewIncident] = useState({
     title: "",
     type: "incident",
@@ -28,6 +34,10 @@ export const CreateIncidentForm = ({ onSubmit, onClose }: CreateIncidentFormProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newIncident.serviceId) {
+      toast.error("Please select a service");
+      return;
+    }
     onSubmit(newIncident);
     toast.success("Incident created successfully");
     onClose();
@@ -52,6 +62,26 @@ export const CreateIncidentForm = ({ onSubmit, onClose }: CreateIncidentFormProp
           }
           required
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="service">Service</Label>
+        <Select
+          value={newIncident.serviceId}
+          onValueChange={(value) =>
+            setNewIncident({ ...newIncident, serviceId: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select a service" />
+          </SelectTrigger>
+          <SelectContent>
+            {services.map((service) => (
+              <SelectItem key={service.id} value={service.id}>
+                {service.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-2">
         <Label htmlFor="type">Type</Label>
