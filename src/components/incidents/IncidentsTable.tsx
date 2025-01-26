@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit2, Check, X } from "lucide-react";
+import { Edit2, Check, X, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 interface Incident {
@@ -26,9 +26,10 @@ interface IncidentsTableProps {
   incidents: Incident[];
   services: Service[];
   onUpdateIncident: (updatedIncident: Incident) => void;
+  onEditService: (service: Service) => void;
 }
 
-export const IncidentsTable = ({ incidents, services, onUpdateIncident }: IncidentsTableProps) => {
+export const IncidentsTable = ({ incidents, services, onUpdateIncident, onEditService }: IncidentsTableProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedIncident, setEditedIncident] = useState<Incident | null>(null);
 
@@ -80,7 +81,16 @@ export const IncidentsTable = ({ incidents, services, onUpdateIncident }: Incide
         const service = services.find(s => s.id === serviceId);
         return (
           <div key={serviceId} className="rounded-lg border p-4">
-            <h3 className="text-lg font-semibold mb-4">{service?.name || 'Unknown Service'}</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">{service?.name || 'Unknown Service'}</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => service && onEditService(service)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
             <Table>
               <TableHeader>
                 <TableRow>

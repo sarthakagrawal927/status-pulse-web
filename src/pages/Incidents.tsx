@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,12 +9,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CreateIncidentForm } from "@/components/incidents/CreateIncidentForm";
+import { CreateServiceForm } from "@/components/services/CreateServiceForm";
 import { IncidentsTable } from "@/components/incidents/IncidentsTable";
 import { OrganizationOverview } from "@/components/OrganizationOverview";
 import { useIncidentWebSocket } from "@/hooks/useIncidentWebSocket";
+import type { Service } from "@/components/ServiceCard";
 
 const Incidents = () => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isIncidentDialogOpen, setIsIncidentDialogOpen] = useState(false);
+  const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<Service | undefined>(undefined);
+  
   const [incidents, setIncidents] = useState([
     {
       id: "1",
@@ -70,6 +75,36 @@ const Incidents = () => {
     });
   };
 
+  const handleServiceSubmit = (serviceData: Omit<Service, "id" | "lastUpdated">) => {
+    if (selectedService) {
+      // Update existing service
+      setServices(prevServices =>
+        prevServices.map(service =>
+          service.id === selectedService.id
+            ? {
+                ...service,
+                ...serviceData,
+                lastUpdated: new Date().toISOString(),
+              }
+            : service
+        )
+      );
+    } else {
+      // Create new service
+      const newService: Service = {
+        id: crypto.randomUUID(),
+        ...serviceData,
+        lastUpdated: new Date().toISOString(),
+      };
+      setServices(prev => [...prev, newService]);
+    }
+  };
+
+  const handleEditService = (service: Service) => {
+    setSelectedService(service);
+    setIsServiceDialogOpen(true);
+  };
+
   // Initialize WebSocket connection
   useIncidentWebSocket(handleIncidentUpdate);
 
@@ -79,30 +114,55 @@ const Incidents = () => {
       
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Incidents & Maintenance</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              New Incident
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Incident</DialogTitle>
-            </DialogHeader>
-            <CreateIncidentForm
-              onSubmit={handleIncidentUpdate}
-              onClose={() => setIsDialogOpen(false)}
-              services={services}
-            />
-          </DialogContent>
-        </Dialog>
+        <div className="flex gap-2">
+          <Dialog open={isServiceDialogOpen} onOpenChange={(open) => {
+            setIsServiceDialogOpen(open);
+            if (!open) setSelectedService(undefined);
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Settings className="mr-2 h-4 w-4" />
+                Manage Services
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{selectedService ? "Edit" : "Create"} Service</DialogTitle>
+              </DialogHeader>
+              <CreateServiceForm
+                onSubmit={handleServiceSubmit}
+                onClose={() => setIsServiceDialogOpen(false)}
+                initialData={selectedService}
+              />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isIncidentDialogOpen} onOpenChange={setIsIncidentDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New Incident
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Incident</DialogTitle>
+              </DialogHeader>
+              <CreateIncidentForm
+                onSubmit={handleIncidentUpdate}
+                onClose={() => setIsIncidentDialogOpen(false)}
+                services={services}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <IncidentsTable 
         incidents={incidents} 
         services={services} 
         onUpdateIncident={handleIncidentUpdate}
+        onEditService={handleEditService}
       />
     </div>
   );
