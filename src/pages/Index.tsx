@@ -11,6 +11,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
+const mockOrganization = {
+  name: "Acme Corp",
+  logo: "/placeholder.svg",
+  domain: "acme.corp",
+};
+
 const mockServices: Service[] = [
   {
     id: "1",
@@ -46,7 +52,7 @@ const mockIncidents = [
   {
     id: "1",
     title: "API Performance Degradation",
-    type: "incident",
+    type: "incident" as const,
     status: "investigating",
     createdAt: "2024-01-20T10:00:00Z",
     updatedAt: "2024-01-20T12:00:00Z",
@@ -69,7 +75,7 @@ const mockIncidents = [
   {
     id: "2",
     title: "Scheduled Database Maintenance",
-    type: "maintenance",
+    type: "maintenance" as const,
     status: "scheduled",
     createdAt: "2024-01-25T15:00:00Z",
     updatedAt: "2024-01-25T15:00:00Z",
