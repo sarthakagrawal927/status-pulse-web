@@ -1,26 +1,61 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, redirect, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { API_FUNCTIONS } from "@/lib/api";
+
+interface SignUpForm {
+  email: string;
+  name: string;
+  organizationName: string;
+  password: string;
+  confirmPassword: string;
+}
+
+const INITIAL_FORM_STATE: SignUpForm = {
+  email: "",
+  name: "",
+  organizationName: "",
+  password: "",
+  confirmPassword: "",
+};
 
 const SignUp = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const history = useNavigate();
+  const [formData, setFormData] = useState<SignUpForm>(INITIAL_FORM_STATE);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
+
+    if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
     }
 
-    // TODO: Implement signup logic
-    toast.success("Account created successfully!");
+    const { data, err } = await API_FUNCTIONS.register(
+      formData.email,
+      formData.password,
+      formData.name,
+      formData.organizationName
+    );
+
+    if (!err) {
+      toast.success("Account created successfully!");
+      setFormData(INITIAL_FORM_STATE);
+      history("/login");
+    }
+    else toast.error(err.data.message || err.statusText);
   };
 
   return (
@@ -38,10 +73,33 @@ const SignUp = () => {
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="organizationName">Organization Name</Label>
+              <Input
+                id="organizationName"
+                name="organizationName"
+                type="text"
+                value={formData.organizationName}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -49,9 +107,10 @@ const SignUp = () => {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -59,9 +118,10 @@ const SignUp = () => {
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                value={formData.confirmPassword}
+                onChange={handleChange}
                 required
               />
             </div>

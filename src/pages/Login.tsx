@@ -5,15 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { API_FUNCTIONS } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+  const history = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    toast.success("Successfully logged in!");
+    const { err } = await API_FUNCTIONS.login(email, password);
+
+    if (!err) {
+      toast.success("Logged in successfully!");
+      history("/");
+    }
+    else toast.error(err.data.message || err.statusText);
   };
 
   return (
