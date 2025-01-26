@@ -58,15 +58,15 @@ const Incidents = () => {
     website: "https://example.com",
   };
 
-  const handleIncidentUpdate = (newIncident: any) => {
+  const handleIncidentUpdate = (updatedIncident: any) => {
     setIncidents((prev) => {
-      const index = prev.findIndex((i) => i.id === newIncident.id);
+      const index = prev.findIndex((i) => i.id === updatedIncident.id);
       if (index >= 0) {
         const updated = [...prev];
-        updated[index] = newIncident;
+        updated[index] = updatedIncident;
         return updated;
       }
-      return [...prev, newIncident];
+      return [...prev, updatedIncident];
     });
   };
 
@@ -93,12 +93,17 @@ const Incidents = () => {
             <CreateIncidentForm
               onSubmit={handleIncidentUpdate}
               onClose={() => setIsDialogOpen(false)}
+              services={services}
             />
           </DialogContent>
         </Dialog>
       </div>
 
-      <IncidentsTable incidents={incidents} services={services} />
+      <IncidentsTable 
+        incidents={incidents} 
+        services={services} 
+        onUpdateIncident={handleIncidentUpdate}
+      />
     </div>
   );
 };

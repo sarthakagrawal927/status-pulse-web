@@ -42,7 +42,15 @@ const mockOrganization = {
 };
 
 const Index = () => {
-  const [services] = useState<Service[]>(mockServices);
+  const [services, setServices] = useState<Service[]>(mockServices);
+
+  const handleUpdateService = (updatedService: Service) => {
+    setServices(prevServices => 
+      prevServices.map(service => 
+        service.id === updatedService.id ? updatedService : service
+      )
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,7 +60,11 @@ const Index = () => {
           <StatusOverview services={services} />
           <div className="grid gap-4">
             {services.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+              <ServiceCard 
+                key={service.id} 
+                service={service} 
+                onUpdate={handleUpdateService}
+              />
             ))}
           </div>
         </div>
