@@ -12,9 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 const mockOrganization = {
+  id: "1",
   name: "Acme Corp",
-  logo: "/placeholder.svg",
-  domain: "acme.corp",
+  description: "Leading provider of innovative cloud solutions",
+  website: "https://acme.corp",
 };
 
 const mockServices: Service[] = [
