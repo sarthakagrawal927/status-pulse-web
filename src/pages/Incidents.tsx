@@ -19,19 +19,19 @@ const Incidents = () => {
   const [isIncidentDialogOpen, setIsIncidentDialogOpen] = useState(false);
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | undefined>(undefined);
-  const [services, setServices] = useState([
+  const [services, setServices] = useState<Service[]>([
     {
       id: "api-service",
       name: "API Service",
       description: "Main API endpoints",
-      status: "operational" as const,
+      status: "operational",
       lastUpdated: new Date().toISOString(),
     },
     {
       id: "db-service",
       name: "Database Service",
       description: "Primary database cluster",
-      status: "operational" as const,
+      status: "operational",
       lastUpdated: new Date().toISOString(),
     },
   ]);
