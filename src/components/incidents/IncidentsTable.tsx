@@ -3,8 +3,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Edit2, Check, X, Settings } from "lucide-react";
+import { Edit2, Check, X, Settings, MessageSquarePlus } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { CreateUpdateForm } from "./CreateUpdateForm";
+
+interface IncidentUpdate {
+  id: string;
+  incidentId: string;
+  status: string;
+  message: string;
+  createdAt: string;
+}
 
 interface Incident {
   id: string;
@@ -14,6 +30,7 @@ interface Incident {
   createdAt: string;
   updatedAt: string;
   serviceId: string;
+  updates?: IncidentUpdate[];
 }
 
 interface Service {
@@ -27,11 +44,19 @@ interface IncidentsTableProps {
   services: Service[];
   onUpdateIncident: (updatedIncident: Incident) => void;
   onEditService: (service: Service) => void;
+  onAddUpdate: (incidentId: string, update: Omit<IncidentUpdate, "id" | "createdAt">) => void;
 }
 
-export const IncidentsTable = ({ incidents, services, onUpdateIncident, onEditService }: IncidentsTableProps) => {
+export const IncidentsTable = ({ 
+  incidents, 
+  services, 
+  onUpdateIncident, 
+  onEditService,
+  onAddUpdate 
+}: IncidentsTableProps) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editedIncident, setEditedIncident] = useState<Incident | null>(null);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<string | null>(null);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -104,53 +129,100 @@ export const IncidentsTable = ({ incidents, services, onUpdateIncident, onEditSe
               </TableHeader>
               <TableBody>
                 {serviceIncidents.map((incident) => (
-                  <TableRow key={incident.id}>
-                    <TableCell className="font-medium">
-                      {editingId === incident.id ? (
-                        <Input
-                          value={editedIncident?.title}
-                          onChange={(e) =>
-                            setEditedIncident(prev => prev ? { ...prev, title: e.target.value } : null)
-                          }
-                        />
-                      ) : (
-                        incident.title
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={incident.type === "incident" ? "destructive" : "secondary"}>
-                        {incident.type === "incident" ? "Incident" : "Maintenance"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(incident.status)}>
-                        {incident.status.replace("_", " ").charAt(0).toUpperCase() +
-                          incident.status.slice(1).replace("_", " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{new Date(incident.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>{new Date(incident.updatedAt).toLocaleString()}</TableCell>
-                    <TableCell>
-                      {editingId === incident.id ? (
+                  <>
+                    <TableRow key={incident.id}>
+                      <TableCell className="font-medium">
+                        {editingId === incident.id ? (
+                          <Input
+                            value={editedIncident?.title}
+                            onChange={(e) =>
+                              setEditedIncident(prev => prev ? { ...prev, title: e.target.value } : null)
+                            }
+                          />
+                        ) : (
+                          incident.title
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={incident.type === "incident" ? "destructive" : "secondary"}>
+                          {incident.type === "incident" ? "Incident" : "Maintenance"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(incident.status)}>
+                          {incident.status.replace("_", " ").charAt(0).toUpperCase() +
+                            incident.status.slice(1).replace("_", " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(incident.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(incident.updatedAt).toLocaleString()}</TableCell>
+                      <TableCell>
                         <div className="flex gap-2">
-                          <Button size="icon" variant="ghost" onClick={handleCancel}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleSave(incident)}>
-                            <Check className="h-4 w-4" />
-                          </Button>
+                          {editingId === incident.id ? (
+                            <>
+                              <Button size="icon" variant="ghost" onClick={handleCancel}>
+                                <X className="h-4 w-4" />
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => handleSave(incident)}>
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => startEditing(incident)}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
+                              <Dialog open={selectedIncidentId === incident.id} onOpenChange={(open) => setSelectedIncidentId(open ? incident.id : null)}>
+                                <DialogTrigger asChild>
+                                  <Button size="icon" variant="ghost">
+                                    <MessageSquarePlus className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogHeader>
+                                    <DialogTitle>Add Update to {incident.title}</DialogTitle>
+                                  </DialogHeader>
+                                  <CreateUpdateForm
+                                    onSubmit={(update) => {
+                                      onAddUpdate(incident.id, update);
+                                      setSelectedIncidentId(null);
+                                    }}
+                                    onClose={() => setSelectedIncidentId(null)}
+                                  />
+                                </DialogContent>
+                              </Dialog>
+                            </>
+                          )}
                         </div>
-                      ) : (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => startEditing(incident)}
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                    </TableRow>
+                    {incident.updates && incident.updates.length > 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="bg-muted/50">
+                          <div className="space-y-2 p-2">
+                            <h4 className="font-semibold text-sm">Updates</h4>
+                            {incident.updates.map((update) => (
+                              <div key={update.id} className="border-l-2 border-primary pl-4 py-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge className={getStatusColor(update.status)}>
+                                    {update.status.charAt(0).toUpperCase() + update.status.slice(1)}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(update.createdAt).toLocaleString()}
+                                  </span>
+                                </div>
+                                <p className="text-sm">{update.message}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 ))}
               </TableBody>
             </Table>

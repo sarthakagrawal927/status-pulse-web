@@ -15,6 +15,25 @@ import { OrganizationOverview } from "@/components/OrganizationOverview";
 import { useIncidentWebSocket } from "@/hooks/useIncidentWebSocket";
 import type { Service } from "@/components/ServiceCard";
 
+interface IncidentUpdate {
+  id: string;
+  incidentId: string;
+  status: string;
+  message: string;
+  createdAt: string;
+}
+
+interface Incident {
+  id: string;
+  title: string;
+  type: "incident" | "maintenance";
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  serviceId: string;
+  updates?: IncidentUpdate[];
+}
+
 const Incidents = () => {
   const [isIncidentDialogOpen, setIsIncidentDialogOpen] = useState(false);
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
@@ -36,26 +55,28 @@ const Incidents = () => {
     },
   ]);
   
-  const [incidents, setIncidents] = useState([
+  const [incidents, setIncidents] = useState<Incident[]>([
     {
       id: "1",
       title: "API Performance Degradation",
-      type: "incident" as const,
+      type: "incident",
       status: "resolved",
       createdAt: "2024-01-20T10:00:00Z",
       updatedAt: "2024-01-20T12:00:00Z",
       description: "API response times were elevated due to increased traffic.",
       serviceId: "api-service",
+      updates: [],
     },
     {
       id: "2",
       title: "Database Maintenance",
-      type: "maintenance" as const,
+      type: "maintenance",
       status: "scheduled",
       createdAt: "2024-01-25T15:00:00Z",
       updatedAt: "2024-01-25T15:00:00Z",
       description: "Scheduled database upgrade to improve performance.",
       serviceId: "db-service",
+      updates: [],
     },
   ]);
 
@@ -66,7 +87,7 @@ const Incidents = () => {
     website: "https://example.com",
   };
 
-  const handleIncidentUpdate = (updatedIncident: any) => {
+  const handleIncidentUpdate = (updatedIncident: Incident) => {
     setIncidents((prev) => {
       const index = prev.findIndex((i) => i.id === updatedIncident.id);
       if (index >= 0) {
@@ -80,7 +101,6 @@ const Incidents = () => {
 
   const handleServiceSubmit = (serviceData: Omit<Service, "id" | "lastUpdated">) => {
     if (selectedService) {
-      // Update existing service
       setServices(prevServices =>
         prevServices.map(service =>
           service.id === selectedService.id
@@ -93,7 +113,6 @@ const Incidents = () => {
         )
       );
     } else {
-      // Create new service
       const newService: Service = {
         id: crypto.randomUUID(),
         ...serviceData,
@@ -108,6 +127,28 @@ const Incidents = () => {
   const handleEditService = (service: Service) => {
     setSelectedService(service);
     setIsServiceDialogOpen(true);
+  };
+
+  const handleAddUpdate = (incidentId: string, update: { status: string; message: string }) => {
+    setIncidents(prev => prev.map(incident => {
+      if (incident.id === incidentId) {
+        const newUpdate: IncidentUpdate = {
+          id: crypto.randomUUID(),
+          incidentId,
+          status: update.status,
+          message: update.message,
+          createdAt: new Date().toISOString(),
+        };
+        return {
+          ...incident,
+          status: update.status,
+          updatedAt: new Date().toISOString(),
+          updates: [...(incident.updates || []), newUpdate],
+        };
+      }
+      return incident;
+    }));
+    toast.success("Update added successfully");
   };
 
   // Initialize WebSocket connection
@@ -168,6 +209,7 @@ const Incidents = () => {
         services={services} 
         onUpdateIncident={handleIncidentUpdate}
         onEditService={handleEditService}
+        onAddUpdate={handleAddUpdate}
       />
     </div>
   );
