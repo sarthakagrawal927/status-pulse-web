@@ -13,6 +13,7 @@ import { CreateServiceForm } from "@/components/services/CreateServiceForm";
 import { IncidentsTable } from "@/components/incidents/IncidentsTable";
 import { OrganizationOverview } from "@/components/OrganizationOverview";
 import { useIncidentWebSocket } from "@/hooks/useIncidentWebSocket";
+import { toast } from "sonner";
 import type { Service } from "@/components/ServiceCard";
 
 interface IncidentUpdate {
@@ -63,7 +64,6 @@ const Incidents = () => {
       status: "resolved",
       createdAt: "2024-01-20T10:00:00Z",
       updatedAt: "2024-01-20T12:00:00Z",
-      description: "API response times were elevated due to increased traffic.",
       serviceId: "api-service",
       updates: [],
     },
@@ -74,7 +74,6 @@ const Incidents = () => {
       status: "scheduled",
       createdAt: "2024-01-25T15:00:00Z",
       updatedAt: "2024-01-25T15:00:00Z",
-      description: "Scheduled database upgrade to improve performance.",
       serviceId: "db-service",
       updates: [],
     },
@@ -129,14 +128,12 @@ const Incidents = () => {
     setIsServiceDialogOpen(true);
   };
 
-  const handleAddUpdate = (incidentId: string, update: { status: string; message: string }) => {
+  const handleAddUpdate = (incidentId: string, update: Omit<IncidentUpdate, "id" | "createdAt">) => {
     setIncidents(prev => prev.map(incident => {
       if (incident.id === incidentId) {
         const newUpdate: IncidentUpdate = {
           id: crypto.randomUUID(),
-          incidentId,
-          status: update.status,
-          message: update.message,
+          ...update,
           createdAt: new Date().toISOString(),
         };
         return {
@@ -195,7 +192,20 @@ const Incidents = () => {
                 <DialogTitle>Create New Incident</DialogTitle>
               </DialogHeader>
               <CreateIncidentForm
-                onSubmit={handleIncidentUpdate}
+                onSubmit={(incident) => {
+                  const newIncident: Incident = {
+                    id: crypto.randomUUID(),
+                    title: incident.title,
+                    type: incident.type,
+                    status: incident.status,
+                    serviceId: incident.serviceId,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    updates: [],
+                  };
+                  handleIncidentUpdate(newIncident);
+                  setIsIncidentDialogOpen(false);
+                }}
                 onClose={() => setIsIncidentDialogOpen(false)}
                 services={services}
               />

@@ -12,14 +12,16 @@ import {
 import { toast } from "sonner";
 
 interface CreateUpdateFormProps {
-  onSubmit: (update: { status: string; message: string }) => void;
+  onSubmit: (update: { status: string; message: string; incidentId: string }) => void;
   onClose: () => void;
+  incidentId: string;
 }
 
-export const CreateUpdateForm = ({ onSubmit, onClose }: CreateUpdateFormProps) => {
+export const CreateUpdateForm = ({ onSubmit, onClose, incidentId }: CreateUpdateFormProps) => {
   const [newUpdate, setNewUpdate] = useState({
     status: "investigating",
     message: "",
+    incidentId: incidentId,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,6 +36,7 @@ export const CreateUpdateForm = ({ onSubmit, onClose }: CreateUpdateFormProps) =
     setNewUpdate({
       status: "investigating",
       message: "",
+      incidentId: incidentId,
     });
   };
 

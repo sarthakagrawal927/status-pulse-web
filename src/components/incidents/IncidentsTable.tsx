@@ -187,6 +187,7 @@ export const IncidentsTable = ({
                                     <DialogTitle>Add Update to {incident.title}</DialogTitle>
                                   </DialogHeader>
                                   <CreateUpdateForm
+                                    incidentId={incident.id}
                                     onSubmit={(update) => {
                                       onAddUpdate(incident.id, update);
                                       setSelectedIncidentId(null);
