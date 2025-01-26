@@ -19,6 +19,22 @@ const Incidents = () => {
   const [isIncidentDialogOpen, setIsIncidentDialogOpen] = useState(false);
   const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | undefined>(undefined);
+  const [services, setServices] = useState([
+    {
+      id: "api-service",
+      name: "API Service",
+      description: "Main API endpoints",
+      status: "operational" as const,
+      lastUpdated: new Date().toISOString(),
+    },
+    {
+      id: "db-service",
+      name: "Database Service",
+      description: "Primary database cluster",
+      status: "operational" as const,
+      lastUpdated: new Date().toISOString(),
+    },
+  ]);
   
   const [incidents, setIncidents] = useState([
     {
@@ -42,19 +58,6 @@ const Incidents = () => {
       serviceId: "db-service",
     },
   ]);
-
-  const services = [
-    {
-      id: "api-service",
-      name: "API Service",
-      description: "Main API endpoints",
-    },
-    {
-      id: "db-service",
-      name: "Database Service",
-      description: "Primary database cluster",
-    },
-  ];
 
   const organization = {
     id: "1",
@@ -98,6 +101,8 @@ const Incidents = () => {
       };
       setServices(prev => [...prev, newService]);
     }
+    setIsServiceDialogOpen(false);
+    setSelectedService(undefined);
   };
 
   const handleEditService = (service: Service) => {

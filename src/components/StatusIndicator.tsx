@@ -24,10 +24,12 @@ const statusConfig = {
     color: "bg-status-maintenance",
     label: "Maintenance",
   },
-};
+} as const;
 
 export const StatusIndicator = ({ status, className, editable, onStatusChange }: StatusIndicatorProps) => {
-  const config = statusConfig[status];
+  // Ensure status is valid, default to operational if not
+  const validStatus = status in statusConfig ? status : "operational";
+  const config = statusConfig[validStatus];
   
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -40,7 +42,7 @@ export const StatusIndicator = ({ status, className, editable, onStatusChange }:
         onClick={() => {
           if (editable && onStatusChange) {
             const statuses: ("operational" | "degraded" | "outage" | "maintenance")[] = ["operational", "degraded", "outage", "maintenance"];
-            const currentIndex = statuses.indexOf(status);
+            const currentIndex = statuses.indexOf(validStatus);
             const nextStatus = statuses[(currentIndex + 1) % statuses.length];
             onStatusChange(nextStatus);
           }
