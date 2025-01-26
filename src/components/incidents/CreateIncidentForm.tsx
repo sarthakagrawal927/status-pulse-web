@@ -26,16 +26,22 @@ interface CreateIncidentFormProps {
 export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncidentFormProps) => {
   const [newIncident, setNewIncident] = useState({
     title: "",
-    type: "incident",
+    type: "incident" as "incident" | "maintenance",
     status: "investigating",
     description: "",
     serviceId: "",
+    startTime: "",
+    endTime: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newIncident.serviceId) {
       toast.error("Please select a service");
+      return;
+    }
+    if (newIncident.type === "maintenance" && (!newIncident.startTime || !newIncident.endTime)) {
+      toast.error("Please set start and end times for maintenance");
       return;
     }
     onSubmit(newIncident);
@@ -47,6 +53,8 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
       status: "investigating",
       description: "",
       serviceId: "",
+      startTime: "",
+      endTime: "",
     });
   };
 
@@ -100,6 +108,34 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
           </SelectContent>
         </Select>
       </div>
+      {newIncident.type === "maintenance" && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="startTime">Start Time</Label>
+            <Input
+              id="startTime"
+              type="datetime-local"
+              value={newIncident.startTime}
+              onChange={(e) =>
+                setNewIncident({ ...newIncident, startTime: e.target.value })
+              }
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="endTime">End Time</Label>
+            <Input
+              id="endTime"
+              type="datetime-local"
+              value={newIncident.endTime}
+              onChange={(e) =>
+                setNewIncident({ ...newIncident, endTime: e.target.value })
+              }
+              required
+            />
+          </div>
+        </>
+      )}
       <div className="space-y-2">
         <Label htmlFor="status">Status</Label>
         <Select

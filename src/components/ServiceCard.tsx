@@ -25,6 +25,8 @@ interface Incident {
   createdAt: string;
   updatedAt: string;
   serviceId: string;
+  startTime?: string;  // Optional for maintenance events
+  endTime?: string;    // Optional for maintenance events
   updates?: {
     id: string;
     status: string;
@@ -84,6 +86,11 @@ export const ServiceCard = ({ service, incidents = [] }: ServiceCardProps) => {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
+                    {incident.type === "maintenance" && incident.startTime && incident.endTime && (
+                      <div className="mb-2 text-sm text-muted-foreground">
+                        Scheduled for: {new Date(incident.startTime).toLocaleString()} - {new Date(incident.endTime).toLocaleString()}
+                      </div>
+                    )}
                     {incident.updates && incident.updates.length > 0 && (
                       <div className="space-y-3">
                         {incident.updates.map(update => (
