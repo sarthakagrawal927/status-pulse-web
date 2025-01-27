@@ -90,143 +90,140 @@ export const IncidentsTable = ({
     setEditedIncident(incident);
   };
 
-  // Group incidents by service
-  const groupedIncidents = incidents.reduce((acc, incident) => {
-    const serviceId = incident.serviceId;
-    if (!acc[serviceId]) {
-      acc[serviceId] = [];
-    }
-    acc[serviceId].push(incident);
-    return acc;
-  }, {} as Record<string, Incident[]>);
-
   return (
     <div className="space-y-6">
-      {Object.entries(groupedIncidents).map(([serviceId, serviceIncidents]) => {
-        const service = services.find(s => s.id === serviceId);
+      {services.map((service) => {
+        const serviceIncidents = incidents.filter(i => i.serviceId === service.id);
         return (
-          <div key={serviceId} className="rounded-lg border p-4">
+          <div key={service.id} className="rounded-lg border p-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">{service?.name || 'Unknown Service'}</h3>
+              <h3 className="text-lg font-semibold">{service.name}</h3>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => service && onEditService(service)}
+                onClick={() => onEditService(service)}
               >
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Last Update</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {serviceIncidents.map((incident) => (
-                  <>
-                    <TableRow key={incident.id}>
-                      <TableCell className="font-medium">
-                        {editingId === incident.id ? (
-                          <Input
-                            value={editedIncident?.title}
-                            onChange={(e) =>
-                              setEditedIncident(prev => prev ? { ...prev, title: e.target.value } : null)
-                            }
-                          />
-                        ) : (
-                          incident.title
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={incident.type === "incident" ? "destructive" : "secondary"}>
-                          {incident.type === "incident" ? "Incident" : "Maintenance"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(incident.status)}>
-                          {incident.status.replace("_", " ").charAt(0).toUpperCase() +
-                            incident.status.slice(1).replace("_", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{new Date(incident.createdAt).toLocaleString()}</TableCell>
-                      <TableCell>{new Date(incident.updatedAt).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
+            {serviceIncidents.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Last Update</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {serviceIncidents.map((incident) => (
+                    <>
+                      <TableRow key={incident.id}>
+                        <TableCell className="font-medium">
                           {editingId === incident.id ? (
-                            <>
-                              <Button size="icon" variant="ghost" onClick={handleCancel}>
-                                <X className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" variant="ghost" onClick={() => handleSave(incident)}>
-                                <Check className="h-4 w-4" />
-                              </Button>
-                            </>
+                            <Input
+                              value={editedIncident?.title}
+                              onChange={(e) =>
+                                setEditedIncident(prev => prev ? { ...prev, title: e.target.value } : null)
+                              }
+                            />
                           ) : (
-                            <>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => startEditing(incident)}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Dialog open={selectedIncidentId === incident.id} onOpenChange={(open) => setSelectedIncidentId(open ? incident.id : null)}>
-                                <DialogTrigger asChild>
-                                  <Button size="icon" variant="ghost">
-                                    <MessageSquarePlus className="h-4 w-4" />
-                                  </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                  <DialogHeader>
-                                    <DialogTitle>Add Update to {incident.title}</DialogTitle>
-                                  </DialogHeader>
-                                  <CreateUpdateForm
-                                    incidentId={incident.id}
-                                    onSubmit={(update) => {
-                                      onAddUpdate(incident.id, update);
-                                      setSelectedIncidentId(null);
-                                    }}
-                                    onClose={() => setSelectedIncidentId(null)}
-                                  />
-                                </DialogContent>
-                              </Dialog>
-                            </>
+                            incident.title
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                    {incident.updates && incident.updates.length > 0 && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="bg-muted/50">
-                          <div className="space-y-2 p-2">
-                            <h4 className="font-semibold text-sm">Updates</h4>
-                            {incident.updates.map((update) => (
-                              <div key={update.id} className="border-l-2 border-primary pl-4 py-2">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge className={getStatusColor(update.status)}>
-                                    {update.status.charAt(0).toUpperCase() + update.status.slice(1)}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {new Date(update.createdAt).toLocaleString()}
-                                  </span>
-                                </div>
-                                <p className="text-sm">{update.message}</p>
-                              </div>
-                            ))}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={incident.type === "incident" ? "destructive" : "secondary"}>
+                            {incident.type === "incident" ? "Incident" : "Maintenance"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={getStatusColor(incident.status)}>
+                            {incident.status.replace("_", " ").charAt(0).toUpperCase() +
+                              incident.status.slice(1).replace("_", " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(incident.createdAt).toLocaleString()}</TableCell>
+                        <TableCell>{new Date(incident.updatedAt).toLocaleString()}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            {editingId === incident.id ? (
+                              <>
+                                <Button size="icon" variant="ghost" onClick={handleCancel}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => handleSave(incident)}>
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => startEditing(incident)}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Dialog open={selectedIncidentId === incident.id} onOpenChange={(open) => setSelectedIncidentId(open ? incident.id : null)}>
+                                  <DialogTrigger asChild>
+                                    <Button size="icon" variant="ghost">
+                                      <MessageSquarePlus className="h-4 w-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Add Update to {incident.title}</DialogTitle>
+                                    </DialogHeader>
+                                    <CreateUpdateForm
+                                      incidentId={incident.id}
+                                      onSubmit={(update) => {
+                                        onAddUpdate(incident.id, update);
+                                        setSelectedIncidentId(null);
+                                      }}
+                                      onClose={() => setSelectedIncidentId(null)}
+                                    />
+                                  </DialogContent>
+                                </Dialog>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
-                    )}
-                  </>
-                ))}
-              </TableBody>
-            </Table>
+                      {incident.updates && incident.updates.length > 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="bg-muted/50">
+                            <div className="space-y-2 p-2">
+                              <h4 className="font-semibold text-sm">Updates</h4>
+                              {incident.updates.map((update) => (
+                                <div key={update.id} className="border-l-2 border-primary pl-4 py-2">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge className={getStatusColor(update.status)}>
+                                      {update.status.charAt(0).toUpperCase() + update.status.slice(1)}
+                                    </Badge>
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(update.createdAt).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm">{update.message}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No incidents reported for this service.</p>
+                <p className="text-sm">Service is operating normally.</p>
+              </div>
+            )}
           </div>
         );
       })}

@@ -96,12 +96,8 @@ export const API_FUNCTIONS = {
   getTeamMembers: async () =>
     callApi<void, any[]>("/api/team", undefined, HTTP_METHOD.GET),
 
-  inviteTeamMember: async (data: {
-    email: string;
-    name: string;
-    role: string;
-  }) =>
-    callApi<{ email: string; name: string; role: string }, any>(
+  inviteTeamMember: async (data: { email: string; role: string }) =>
+    callApi<{ email: string; role: string }, any>(
       "/api/team/invite",
       data,
       HTTP_METHOD.POST
@@ -115,5 +111,29 @@ export const API_FUNCTIONS = {
     ),
 
   removeTeamMember: async (userId: string) =>
-    callApi<void, any>(`/api/team/${userId}`, undefined, HTTP_METHOD.DELETE),
+    callApi<void, void>(`/api/team/${userId}`, undefined, HTTP_METHOD.DELETE),
+
+  // Service management
+  getServices: async () =>
+    callApi<void, any[]>("/api/services", undefined, HTTP_METHOD.GET),
+
+  getServiceById: async (id: string) =>
+    callApi<void, any>(`/api/services/${id}`, undefined, HTTP_METHOD.GET),
+
+  createService: async (data: { name: string; description: string }) =>
+    callApi<{ name: string; description: string }, any>(
+      "/api/services",
+      data,
+      HTTP_METHOD.POST
+    ),
+
+  updateService: async (id: string, data: { name?: string; description?: string; status?: string }) =>
+    callApi<{ name?: string; description?: string; status?: string }, any>(
+      `/api/services/${id}`,
+      data,
+      HTTP_METHOD.PATCH
+    ),
+
+  deleteService: async (id: string) =>
+    callApi<void, void>(`/api/services/${id}`, undefined, HTTP_METHOD.DELETE),
 };

@@ -1,14 +1,14 @@
-import { Link } from "react-router-dom";
-import { Button } from "./ui/button";
-import { ContactRound, LogIn, LogOut, PanelsTopLeftIcon, Settings, UserPlus } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/useAuth";
+import { Building, LogIn, LogOut, Settings, UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "./ui/button";
 
 export const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -50,8 +50,14 @@ export const Navbar = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
                   <Link to="/members" className="flex items-center gap-2">
-                    <ContactRound className="h-4 w-4" />
-                    Organization Members
+                    <Building className="h-4 w-4" />
+                    Members
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/incidents" className="flex items-center gap-2">
+                    <Settings className="h-4 w-4" />
+                    Services
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={logout} className="text-destructive">

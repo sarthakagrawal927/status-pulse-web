@@ -11,9 +11,10 @@ interface CreateServiceFormProps {
   onSubmit: (service: Omit<Service, "id" | "lastUpdated">) => void;
   onClose: () => void;
   initialData?: Service;
+  onDelete?: () => void;
 }
 
-export const CreateServiceForm = ({ onSubmit, onClose, initialData }: CreateServiceFormProps) => {
+export const CreateServiceForm = ({ onSubmit, onClose, initialData, onDelete }: CreateServiceFormProps) => {
   const [formData, setFormData] = useState<Omit<Service, "id" | "lastUpdated">>({
     name: "",
     description: "",
@@ -32,13 +33,11 @@ export const CreateServiceForm = ({ onSubmit, onClose, initialData }: CreateServ
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name) {
-      toast.error("Please enter a service name");
+    if (!formData.name.trim()) {
+      toast.error("Service name is required");
       return;
     }
     onSubmit(formData);
-    toast.success(`Service ${initialData ? "updated" : "created"} successfully`);
-    onClose();
   };
 
   return (
@@ -48,10 +47,8 @@ export const CreateServiceForm = ({ onSubmit, onClose, initialData }: CreateServ
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) =>
-            setFormData({ ...formData, name: e.target.value })
-          }
-          required
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter service name"
         />
       </div>
       <div className="space-y-2">
@@ -62,21 +59,39 @@ export const CreateServiceForm = ({ onSubmit, onClose, initialData }: CreateServ
           onChange={(e) =>
             setFormData({ ...formData, description: e.target.value })
           }
-          required
+          placeholder="Enter service description"
         />
       </div>
-      <div className="space-y-2">
-        <Label>Status</Label>
-        <StatusIndicator
-          status={formData.status}
-          onStatusChange={(newStatus) =>
-            setFormData({ ...formData, status: newStatus })
-          }
-          editable
-        />
-      </div>
-      <div className="flex justify-end">
-        <Button type="submit">{initialData ? "Update" : "Create"} Service</Button>
+      {initialData && (
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <StatusIndicator status={formData.status} />
+        </div>
+      )}
+      <div className="flex justify-between pt-4">
+        <div className="space-x-2">
+          <Button type="submit" variant="default">
+            {initialData ? "Update" : "Create"} Service
+          </Button>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+        {onDelete && (
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => {
+              if (window.confirm("Are you sure you want to delete this service?")) {
+                onDelete();
+                toast.success("Service deleted successfully");
+                onClose();
+              }
+            }}
+          >
+            Delete Service
+          </Button>
+        )}
       </div>
     </form>
   );
