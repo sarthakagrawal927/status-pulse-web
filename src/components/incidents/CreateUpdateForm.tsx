@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -9,72 +9,72 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { INCIDENT_STATUSES, type IncidentStatus } from "@/constants/incident";
+import { INCIDENT_STATUS_COLORS } from "@/constants/colors";
+import { cn } from "@/lib/utils";
 
 interface CreateUpdateFormProps {
-  onSubmit: (update: { status: string; message: string; incidentId: string }) => void;
-  onClose: () => void;
-  incidentId: string;
+  onSubmit: (update: { message: string; status: IncidentStatus }) => void;
+  currentStatus: IncidentStatus;
 }
 
-export const CreateUpdateForm = ({ onSubmit, onClose, incidentId }: CreateUpdateFormProps) => {
-  const [newUpdate, setNewUpdate] = useState({
-    status: "investigating",
-    message: "",
-    incidentId: incidentId,
-  });
+export const CreateUpdateForm = ({ onSubmit, currentStatus }: CreateUpdateFormProps) => {
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<IncidentStatus>(currentStatus);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUpdate.message) {
-      toast.error("Please enter an update message");
+    if (!message.trim()) {
+      toast.error("Update message is required");
       return;
     }
-    onSubmit(newUpdate);
-    toast.success("Update added successfully");
-    onClose();
-    setNewUpdate({
-      status: "investigating",
-      message: "",
-      incidentId: incidentId,
-    });
+    onSubmit({ message, status });
+  };
+
+  const formatStatus = (status: string) => {
+    return status.split("_").map(word => 
+      word.charAt(0) + word.slice(1).toLowerCase()
+    ).join(" ");
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="status">Status</Label>
-        <Select
-          value={newUpdate.status}
-          onValueChange={(value) =>
-            setNewUpdate({ ...newUpdate, status: value })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="investigating">Investigating</SelectItem>
-            <SelectItem value="identified">Identified</SelectItem>
-            <SelectItem value="monitoring">Monitoring</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="space-y-2">
         <Label htmlFor="message">Update Message</Label>
         <Textarea
           id="message"
-          value={newUpdate.message}
-          onChange={(e) =>
-            setNewUpdate({ ...newUpdate, message: e.target.value })
-          }
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Describe the current situation..."
           required
         />
       </div>
-      <div className="flex justify-end">
-        <Button type="submit">Add Update</Button>
+      <div className="space-y-2">
+        <Label htmlFor="status">Status</Label>
+        <Select value={status} onValueChange={(value: IncidentStatus) => setStatus(value)}>
+          <SelectTrigger>
+            <SelectValue>
+              <Badge className={cn("rounded-md px-2 py-1", INCIDENT_STATUS_COLORS[status])}>
+                {formatStatus(status)}
+              </Badge>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(INCIDENT_STATUSES).map(([key, value]) => (
+              <SelectItem key={value} value={value}>
+                <Badge className={cn("rounded-md px-2 py-1", INCIDENT_STATUS_COLORS[value])}>
+                  {formatStatus(key)}
+                </Badge>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
+      <Button type="submit" className="w-full">
+        Add Update
+      </Button>
     </form>
   );
 };

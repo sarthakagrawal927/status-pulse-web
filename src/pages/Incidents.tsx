@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { CreateIncidentForm } from "@/components/incidents/CreateIncidentForm";
+import { IncidentsTable } from "@/components/incidents/IncidentsTable";
+import { CreateServiceForm } from "@/components/services/CreateServiceForm";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Settings } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,215 +9,255 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { CreateIncidentForm } from "@/components/incidents/CreateIncidentForm";
-import { CreateServiceForm } from "@/components/services/CreateServiceForm";
-import { IncidentsTable } from "@/components/incidents/IncidentsTable";
-import { OrganizationOverview } from "@/components/OrganizationOverview";
-import { useIncidentWebSocket } from "@/hooks/useIncidentWebSocket";
-import { toast } from "sonner";
-import type { Service } from "@/components/ServiceCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { INCIDENT_STATUSES } from "@/constants/incident";
+import { type ServiceStatus } from "@/constants/service";
 import { API_FUNCTIONS } from "@/lib/api";
-import { useAuth } from "@/hooks/useAuth";
+import { type CreateIncidentData, type CreateUpdateData, type Incident, type Service } from "@/types";
+import { PlusCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-interface IncidentUpdate {
-  id: string;
-  incidentId: string;
-  status: string;
-  message: string;
-  createdAt: string;
-}
-
-interface Incident {
-  id: string;
-  title: string;
-  type: "incident" | "maintenance";
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  serviceId: string;
-  updates?: IncidentUpdate[];
-}
-
-const Incidents = () => {
-  const [isIncidentDialogOpen, setIsIncidentDialogOpen] = useState(false);
-  const [isServiceDialogOpen, setIsServiceDialogOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<Service | undefined>(undefined);
+export default function IncidentsPage() {
   const [services, setServices] = useState<Service[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [isCreateServiceOpen, setIsCreateServiceOpen] = useState(false);
+  const [isIncidentDialogOpen, setIsIncidentDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  const fetchServices = async () => {
-    try {
-      const response = await API_FUNCTIONS.getServices();
-      if (response.data) {
-        setServices(response.data.map(service => ({
-          id: service.id,
-          name: service.name,
-          description: service.description,
-          status: service.status,
-          lastUpdated: service.updatedAt,
-        })));
-      }
-    } catch (error) {
-      toast.error("Failed to fetch services");
-    }
-  };
 
   useEffect(() => {
     fetchServices();
   }, []);
 
-  const handleIncidentUpdate = (updatedIncident: Incident) => {
-    setIncidents((prev) => {
-      const index = prev.findIndex((i) => i.id === updatedIncident.id);
-      if (index >= 0) {
-        const updated = [...prev];
-        updated[index] = updatedIncident;
-        return updated;
+  const fetchServices = async () => {
+    try {
+      const response = await API_FUNCTIONS.getServices();
+      if (response.data) {
+        setServices(response.data);
       }
-      return [...prev, updatedIncident];
-    });
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      toast.error("Failed to fetch services");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleServiceSubmit = async (serviceData: Omit<Service, "id" | "lastUpdated">) => {
+  const updateServiceInState = (
+    serviceId: string,
+    updateFn: (service: Service) => Service
+  ) => {
+    setServices((prev) =>
+      prev.map((service) =>
+        service.id === serviceId ? updateFn(service) : service
+      )
+    );
+  };
+
+  const handleUpdateIncident = async (updatedIncident: Incident) => {
+    try {
+      const response = await API_FUNCTIONS.updateIncident(updatedIncident.id, {
+        title: updatedIncident.title,
+        type: updatedIncident.type,
+        status: updatedIncident.status,
+        impact: updatedIncident.impact,
+        description: updatedIncident.description,
+        serviceId: updatedIncident.serviceId,
+      });
+
+      if (response.data) {
+        updateServiceInState(updatedIncident.serviceId, (service) => ({
+          ...service,
+          incidents: service.incidents?.map((incident) =>
+            incident.id === updatedIncident.id ? updatedIncident : incident
+          ) || [],
+        }));
+        toast.success("Incident updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating incident:", error);
+      toast.error("Failed to update incident");
+    }
+  };
+
+  const handleCreateIncident = async (data: CreateIncidentData) => {
+    try {
+      const response = await API_FUNCTIONS.createIncident(data);
+      if (response.data) {
+        updateServiceInState(data.serviceId, (service) => ({
+          ...service,
+          incidents: [...(service.incidents || []), response.data],
+        }));
+        setIsIncidentDialogOpen(false);
+        toast.success("Incident created successfully");
+      }
+    } catch (error) {
+      console.error("Error creating incident:", error);
+      toast.error("Failed to create incident");
+    }
+  };
+
+  const handleUpdateService = async (serviceId: string, status: ServiceStatus) => {
+    try {
+      const response = await API_FUNCTIONS.updateService(serviceId, { status });
+      if (response.data) {
+        updateServiceInState(serviceId, service => ({
+          ...service,
+          status,
+          updatedAt: new Date().toISOString(),
+        }));
+        toast.success("Service status updated successfully");
+      }
+    } catch (error) {
+      console.error("Error updating service:", error);
+      toast.error("Failed to update service");
+    }
+  };
+
+  const handleServiceSubmit = async (serviceData: Omit<Service, "id" | "updatedAt" | "incidents">) => {
     try {
       if (selectedService) {
-        const response = await API_FUNCTIONS.updateService(selectedService.id, {
-          name: serviceData.name,
-          description: serviceData.description,
-          status: serviceData.status,
-        });
+        const response = await API_FUNCTIONS.updateService(selectedService.id, serviceData);
         if (response.data) {
-          setServices(prevServices =>
-            prevServices.map(service =>
-              service.id === selectedService.id
-                ? {
-                    ...service,
-                    ...serviceData,
-                    lastUpdated: new Date().toISOString(),
-                  }
-                : service
-            )
-          );
+          updateServiceInState(selectedService.id, service => ({
+            ...service,
+            ...serviceData,
+            updatedAt: new Date().toISOString(),
+          }));
           toast.success("Service updated successfully");
         }
       } else {
-        const response = await API_FUNCTIONS.createService({
-          name: serviceData.name,
-          description: serviceData.description,
-        });
+        const response = await API_FUNCTIONS.createService(serviceData);
         if (response.data) {
           const newService: Service = {
             id: response.data.id,
             ...serviceData,
-            lastUpdated: response.data.updatedAt,
+            updatedAt: response.data.updatedAt,
+            incidents: [],
           };
           setServices(prev => [...prev, newService]);
           toast.success("Service created successfully");
         }
       }
-      setIsServiceDialogOpen(false);
-      setSelectedService(undefined);
+      setIsCreateServiceOpen(false);
+      setSelectedService(null);
     } catch (error) {
-      toast.error(selectedService ? "Failed to update service" : "Failed to create service");
+      console.error("Error submitting service:", error);
+      toast.error("Failed to submit service");
     }
   };
 
-  const handleEditService = (service: Service) => {
-    setSelectedService(service);
-    setIsServiceDialogOpen(true);
-  };
-
-  const handleDeleteService = async (serviceId: string) => {
+  const handleAddUpdate = async (incidentId: string, update: CreateUpdateData) => {
     try {
-      await API_FUNCTIONS.deleteService(serviceId);
-      setServices(prev => prev.filter(service => service.id !== serviceId));
-      toast.success("Service deleted successfully");
+      const response = await API_FUNCTIONS.createIncidentUpdate(incidentId, update);
+      if (response.data) {
+        setServices(prev =>
+          prev.map(service => ({
+            ...service,
+            incidents: service.incidents?.map(incident =>
+              incident.id === incidentId
+                ? {
+                    ...incident,
+                    status: update.status,
+                    updatedAt: new Date().toISOString(),
+                    updates: [response.data, ...(incident.updates || [])],
+                  }
+                : incident
+            ),
+          }))
+        );
+        toast.success("Update added successfully");
+      }
     } catch (error) {
-      toast.error("Failed to delete service");
+      console.error("Error adding update:", error);
+      toast.error("Failed to add update");
     }
   };
 
-  const handleAddUpdate = (incidentId: string, update: Omit<IncidentUpdate, "id" | "createdAt">) => {
-    setIncidents(prev => prev.map(incident => {
-      if (incident.id === incidentId) {
-        const newUpdate: IncidentUpdate = {
-          id: crypto.randomUUID(),
-          ...update,
-          createdAt: new Date().toISOString(),
-        };
-        return {
-          ...incident,
-          status: update.status,
-          updatedAt: new Date().toISOString(),
-          updates: [...(incident.updates || []), newUpdate],
-        };
-      }
-      return incident;
-    }));
-    toast.success("Update added successfully");
-  };
+  if (loading) {
+    return (
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-32" />
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </div>
+    );
+  }
 
-  // Initialize WebSocket connection
-  useIncidentWebSocket(handleIncidentUpdate);
+  const totalIncidents = services.reduce(
+    (acc, service) => acc + (service.incidents?.length || 0),
+    0
+  );
+
+  const activeIncidents = services.reduce(
+    (acc, service) =>
+      acc +
+      (service.incidents?.filter(
+        (incident) => incident.status !== INCIDENT_STATUSES.RESOLVED
+      ).length || 0),
+    0
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <OrganizationOverview organization={user?.organization} />
-      
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Incidents & Maintenance</h1>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold">Incidents</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{services.length} Services</span>
+            <span>•</span>
+            <span>{activeIncidents} Active Incidents</span>
+            <span>•</span>
+            <span>{totalIncidents} Total Incidents</span>
+          </div>
+        </div>
         <div className="flex gap-2">
-          <Dialog open={isServiceDialogOpen} onOpenChange={(open) => {
-            setIsServiceDialogOpen(open);
-            if (!open) setSelectedService(undefined);
-          }}>
+          <Dialog open={isCreateServiceOpen} onOpenChange={setIsCreateServiceOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline">
-                <Settings className="mr-2 h-4 w-4" />
-                Manage Services
+              <Button onClick={() => setSelectedService(null)}>
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Create Service
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>{selectedService ? "Edit" : "Create"} Service</DialogTitle>
+                <DialogTitle>
+                  {selectedService ? "Edit Service" : "Create Service"}
+                </DialogTitle>
               </DialogHeader>
               <CreateServiceForm
                 onSubmit={handleServiceSubmit}
-                onClose={() => setIsServiceDialogOpen(false)}
-                initialData={selectedService}
-                onDelete={selectedService ? () => handleDeleteService(selectedService.id) : undefined}
+                onClose={() => {
+                  setIsCreateServiceOpen(false);
+                  setSelectedService(null);
+                }}
+                service={selectedService}
               />
             </DialogContent>
           </Dialog>
 
           <Dialog open={isIncidentDialogOpen} onOpenChange={setIsIncidentDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Incident
+              <Button variant="destructive">
+                <PlusCircle className="h-4 w-4 mr-2" />
+                Report Incident
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Incident</DialogTitle>
+                <DialogTitle>Report New Incident</DialogTitle>
               </DialogHeader>
               <CreateIncidentForm
-                onSubmit={(incident) => {
-                  const newIncident: Incident = {
-                    id: crypto.randomUUID(),
-                    title: incident.title,
-                    type: incident.type,
-                    status: incident.status,
-                    serviceId: incident.serviceId,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString(),
-                    updates: [],
-                  };
-                  handleIncidentUpdate(newIncident);
-                  setIsIncidentDialogOpen(false);
-                }}
+                onSubmit={handleCreateIncident}
                 onClose={() => setIsIncidentDialogOpen(false)}
                 services={services}
               />
@@ -225,15 +266,16 @@ const Incidents = () => {
         </div>
       </div>
 
-      <IncidentsTable 
-        incidents={incidents} 
-        services={services} 
-        onUpdateIncident={handleIncidentUpdate}
-        onEditService={handleEditService}
+      <IncidentsTable
+        services={services}
+        onUpdateIncident={handleUpdateIncident}
+        onEditService={(service) => {
+          setSelectedService(service);
+          setIsCreateServiceOpen(true);
+        }}
+        onUpdateService={handleUpdateService}
         onAddUpdate={handleAddUpdate}
       />
     </div>
   );
-};
-
-export default Incidents;
+}

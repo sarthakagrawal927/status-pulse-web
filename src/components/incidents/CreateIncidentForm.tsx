@@ -11,6 +11,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  INCIDENT_TYPES,
+  INCIDENT_STATUSES,
+  INCIDENT_IMPACTS,
+  type IncidentType,
+  type IncidentStatus,
+  type IncidentImpact
+} from "@/constants/incident";
 
 interface Service {
   id: string;
@@ -18,7 +26,16 @@ interface Service {
 }
 
 interface CreateIncidentFormProps {
-  onSubmit: (incident: any) => void;
+  onSubmit: (incident: {
+    title: string;
+    type: IncidentType;
+    status: IncidentStatus;
+    impact: IncidentImpact;
+    description: string;
+    serviceId: string;
+    startTime?: string;
+    endTime?: string;
+  }) => void;
   onClose: () => void;
   services: Service[];
 }
@@ -26,8 +43,9 @@ interface CreateIncidentFormProps {
 export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncidentFormProps) => {
   const [newIncident, setNewIncident] = useState({
     title: "",
-    type: "incident" as "incident" | "maintenance",
-    status: "investigating",
+    type: INCIDENT_TYPES.INCIDENT as IncidentType,
+    status: INCIDENT_STATUSES.INVESTIGATING as IncidentStatus,
+    impact: INCIDENT_IMPACTS.MINOR as IncidentImpact,
     description: "",
     serviceId: "",
     startTime: "",
@@ -40,7 +58,7 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
       toast.error("Please select a service");
       return;
     }
-    if (newIncident.type === "maintenance" && (!newIncident.startTime || !newIncident.endTime)) {
+    if (newIncident.type === INCIDENT_TYPES.MAINTENANCE && (!newIncident.startTime || !newIncident.endTime)) {
       toast.error("Please set start and end times for maintenance");
       return;
     }
@@ -49,8 +67,9 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
     onClose();
     setNewIncident({
       title: "",
-      type: "incident",
-      status: "investigating",
+      type: INCIDENT_TYPES.INCIDENT,
+      status: INCIDENT_STATUSES.INVESTIGATING,
+      impact: INCIDENT_IMPACTS.MINOR,
       description: "",
       serviceId: "",
       startTime: "",
@@ -91,11 +110,11 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
+      {/* <div className="space-y-2">
         <Label htmlFor="type">Type</Label>
         <Select
           value={newIncident.type}
-          onValueChange={(value: "incident" | "maintenance") =>
+          onValueChange={(value: IncidentType) =>
             setNewIncident({ ...newIncident, type: value })
           }
         >
@@ -103,12 +122,30 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="incident">Incident</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
+            <SelectItem value={INCIDENT_TYPES.INCIDENT}>Incident</SelectItem>
+            <SelectItem value={INCIDENT_TYPES.MAINTENANCE}>Maintenance</SelectItem>
+          </SelectContent>
+        </Select>
+      </div> */}
+      <div className="space-y-2">
+        <Label htmlFor="impact">Impact</Label>
+        <Select
+          value={newIncident.impact}
+          onValueChange={(value: IncidentImpact) =>
+            setNewIncident({ ...newIncident, impact: value })
+          }
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={INCIDENT_IMPACTS.MINOR}>Minor</SelectItem>
+            <SelectItem value={INCIDENT_IMPACTS.MAJOR}>Major</SelectItem>
+            <SelectItem value={INCIDENT_IMPACTS.CRITICAL}>Critical</SelectItem>
           </SelectContent>
         </Select>
       </div>
-      {newIncident.type === "maintenance" && (
+      {newIncident.type === INCIDENT_TYPES.MAINTENANCE && (
         <>
           <div className="space-y-2">
             <Label htmlFor="startTime">Start Time</Label>
@@ -140,7 +177,7 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
         <Label htmlFor="status">Status</Label>
         <Select
           value={newIncident.status}
-          onValueChange={(value) =>
+          onValueChange={(value: IncidentStatus) =>
             setNewIncident({ ...newIncident, status: value })
           }
         >
@@ -148,13 +185,11 @@ export const CreateIncidentForm = ({ onSubmit, onClose, services }: CreateIncide
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="investigating">Investigating</SelectItem>
-            <SelectItem value="identified">Identified</SelectItem>
-            <SelectItem value="monitoring">Monitoring</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
-            <SelectItem value="scheduled">Scheduled</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
+            {Object.entries(INCIDENT_STATUSES).map(([key, value]) => (
+              <SelectItem key={value} value={value}>
+                {key.charAt(0) + key.slice(1).toLowerCase().replace('_', ' ')}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>

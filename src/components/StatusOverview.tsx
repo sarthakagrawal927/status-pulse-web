@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Service } from "./ServiceCard";
+import { Service } from "@/types";
 import { cn } from "@/lib/utils";
+import { SERVICE_STATUSES } from "@/constants/service";
 
 interface StatusOverviewProps {
   services: Service[];
@@ -9,7 +10,7 @@ interface StatusOverviewProps {
 export const StatusOverview = ({ services }: StatusOverviewProps) => {
   const totalServices = services.length;
   const operationalServices = services.filter(
-    (service) => service.status === "operational"
+    (service) => service.status === SERVICE_STATUSES.OPERATIONAL
   ).length;
 
   const getSystemStatus = () => {

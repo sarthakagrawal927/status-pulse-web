@@ -1,8 +1,26 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 import { getAuthHeader } from "./token";
+import { INCIDENT_STATUSES, INCIDENT_TYPES } from "@/constants/incident";
+import {
+  type CreateIncidentData,
+  type CreateUpdateData,
+  type CreateServiceData,
+  Incident,
+  IncidentUpdate,
+} from "@/types";
 
-// const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000";
 const baseUrl = "http://localhost:3000";
+
+const handleAxiosError = (error: AxiosError) => {
+  if (error.response) {
+    throw new Error(
+      `Request failed with status ${error.response.status}: ${
+        (error.response.data as any).message || "Unknown error"
+      }`
+    );
+  }
+  throw error;
+};
 
 export const HTTP_METHOD = {
   GET: "GET",
@@ -53,7 +71,6 @@ export const callApi = async <Input, Output>(
   }
 };
 
-// Example usage for auth endpoints
 export const API_FUNCTIONS = {
   login: async (email: string, password: string) =>
     callApi<
@@ -120,15 +137,11 @@ export const API_FUNCTIONS = {
   getServiceById: async (id: string) =>
     callApi<void, any>(`/api/services/${id}`, undefined, HTTP_METHOD.GET),
 
-  createService: async (data: { name: string; description: string }) =>
-    callApi<{ name: string; description: string }, any>(
-      "/api/services",
-      data,
-      HTTP_METHOD.POST
-    ),
+  createService: async (data: CreateServiceData) =>
+    callApi<CreateServiceData, any>("/api/services", data, HTTP_METHOD.POST),
 
-  updateService: async (id: string, data: { name?: string; description?: string; status?: string }) =>
-    callApi<{ name?: string; description?: string; status?: string }, any>(
+  updateService: async (id: string, data: Partial<CreateServiceData>) =>
+    callApi<Partial<CreateServiceData>, any>(
       `/api/services/${id}`,
       data,
       HTTP_METHOD.PATCH
@@ -136,4 +149,57 @@ export const API_FUNCTIONS = {
 
   deleteService: async (id: string) =>
     callApi<void, void>(`/api/services/${id}`, undefined, HTTP_METHOD.DELETE),
+
+  // Incident management
+  getIncidents: async () => {
+    return callApi<null, CreateIncidentData[]>(
+      "/api/incidents",
+      null,
+      HTTP_METHOD.GET
+    );
+  },
+
+  getIncidentById: async (id: string) => {
+    return callApi<null, CreateIncidentData>(
+      `/api/incidents/${id}`,
+      null,
+      HTTP_METHOD.GET
+    );
+  },
+
+  createIncident: async (data: CreateIncidentData) => {
+    return callApi<CreateIncidentData, Incident>("/api/incidents", data);
+  },
+
+  updateIncident: async (id: string, data: Partial<CreateIncidentData>) => {
+    return callApi<Partial<CreateIncidentData>, CreateIncidentData>(
+      `/api/incidents/${id}`,
+      data,
+      HTTP_METHOD.PATCH
+    );
+  },
+
+  deleteIncident: async (id: string) => {
+    return callApi<null, void>(
+      `/api/incidents/${id}`,
+      null,
+      HTTP_METHOD.DELETE
+    );
+  },
+
+  // Incident Updates
+  createIncidentUpdate: async (incidentId: string, data: CreateUpdateData) => {
+    return callApi<CreateUpdateData, IncidentUpdate>(
+      `/api/incidents/${incidentId}/updates`,
+      data
+    );
+  },
+
+  getIncidentUpdates: async (incidentId: string) => {
+    return callApi<null, CreateUpdateData[]>(
+      `/api/incidents/${incidentId}/updates`,
+      null,
+      HTTP_METHOD.GET
+    );
+  },
 };
