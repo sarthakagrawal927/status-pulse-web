@@ -1,4 +1,5 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
+import { getAuthHeader } from "./token";
 
 // const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:3000";
 const baseUrl = "http://localhost:3000";
@@ -18,24 +19,32 @@ export interface ApiResponse<T> {
   err: AxiosResponse | null;
 }
 
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: baseUrl,
+  withCredentials: true, // This is important for sending cookies
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 export const callApi = async <Input, Output>(
   url: string,
   body?: Input,
   method: HTTPMethod = HTTP_METHOD.POST
 ): Promise<ApiResponse<Output>> => {
   try {
-    console.log(baseUrl, url, body, method);
-    const headers: Record<string, string> = {};
-    let processedBody = body;
+    const headers: Record<string, string> = {
+      // Cookies are sent automatically with the axios instance configuration
+      // No need to include Authorization header if it's not required
+      // ...getAuthHeader(),
+    };
 
-    headers["Content-Type"] = "application/json";
-    processedBody = body;
-
-    const { data }: AxiosResponse<Output> = await axios(`${baseUrl}${url}`, {
-      headers,
+    const { data }: AxiosResponse<Output> = await api({
+      url,
       method,
-      data: processedBody,
-      //   withCredentials: true,
+      data: body,
+      headers,
     });
 
     return { data, err: null };
@@ -47,18 +56,19 @@ export const callApi = async <Input, Output>(
 // Example usage for auth endpoints
 export const API_FUNCTIONS = {
   login: async (email: string, password: string) =>
-    callApi("/api/auth/login", { email, password }, HTTP_METHOD.POST),
+    callApi<
+      { email: string; password: string },
+      { user: any; organization: any; token: string }
+    >("/api/auth/login", { email, password }, HTTP_METHOD.POST),
 
-  register: async (
-    email: string,
-    password: string,
-    name: string,
-    organizationName: string
-  ) =>
-    callApi(
-      "/api/auth/register",
-      { email, password, name, organizationName },
-      HTTP_METHOD.POST
+  logout: async () => {
+    callApi("/api/auth/logout", undefined, HTTP_METHOD.POST);
+  },
+
+  me: async () =>
+    callApi<void, { user: any; organization: any }>(
+      "/api/auth/me",
+      undefined,
+      HTTP_METHOD.GET
     ),
-  logout: () => callApi("/api/logout", {}, HTTP_METHOD.POST),
 };

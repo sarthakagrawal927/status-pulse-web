@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { toast } from "sonner";
 import { API_FUNCTIONS } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
+import { setToken } from "@/lib/token";
 
 const Login = () => {
   const history = useNavigate();
@@ -16,13 +17,15 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { err } = await API_FUNCTIONS.login(email, password);
+    const { data, err } = await API_FUNCTIONS.login(email, password);
 
-    if (!err) {
+    if (data) {
+      const { token } = data;
+      setToken(token);
       toast.success("Logged in successfully!");
       history("/");
     }
-    else toast.error(err.data.message || err.statusText);
+    else toast.error(err?.data?.message || err?.statusText || "Login failed");
   };
 
   return (
