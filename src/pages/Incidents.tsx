@@ -16,6 +16,7 @@ import { useIncidentWebSocket } from "@/hooks/useIncidentWebSocket";
 import { toast } from "sonner";
 import type { Service } from "@/components/ServiceCard";
 import { API_FUNCTIONS } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 interface IncidentUpdate {
   id: string;
@@ -43,6 +44,7 @@ const Incidents = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   const fetchServices = async () => {
     try {
@@ -159,16 +161,9 @@ const Incidents = () => {
   // Initialize WebSocket connection
   useIncidentWebSocket(handleIncidentUpdate);
 
-  const organization = {
-    id: "1",
-    name: "Example Organization",
-    description: "A technology company focused on developer tools",
-    website: "https://example.com",
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
-      <OrganizationOverview organization={organization} />
+      <OrganizationOverview organization={user?.organization} />
       
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Incidents & Maintenance</h1>

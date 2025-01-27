@@ -9,24 +9,27 @@ import Login from "./pages/Login";
 import Members from "./pages/Members";
 import Incidents from "./pages/Incidents";
 import { Navbar } from "./components/Navbar";
+import { AuthProvider } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/incidents" element={<Incidents />} />
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/members" element={<Members />} />
+            <Route path="/incidents" element={<Incidents />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

@@ -8,9 +8,11 @@ import { toast } from "sonner";
 import { API_FUNCTIONS } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { setToken } from "@/lib/token";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const history = useNavigate();
+  const { refreshAuth } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,6 +24,7 @@ const Login = () => {
     if (data) {
       const { token } = data;
       setToken(token);
+      await refreshAuth(); // Refresh auth state after setting token
       toast.success("Logged in successfully!");
       history("/");
     }
