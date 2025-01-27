@@ -61,6 +61,26 @@ export const API_FUNCTIONS = {
       { user: any; organization: any; token: string }
     >("/api/auth/login", { email, password }, HTTP_METHOD.POST),
 
+  register: async (
+    email: string,
+    password: string,
+    name: string,
+    organizationName: string
+  ) =>
+    callApi<
+      {
+        email: string;
+        password: string;
+        name: string;
+        organizationName: string;
+      },
+      { user: any; organization: any; token: string }
+    >(
+      "/api/auth/register",
+      { email, password, name, organizationName },
+      HTTP_METHOD.POST
+    ),
+
   logout: async () => {
     callApi("/api/auth/logout", undefined, HTTP_METHOD.POST);
   },
@@ -71,4 +91,29 @@ export const API_FUNCTIONS = {
       undefined,
       HTTP_METHOD.GET
     ),
+
+  // Team management
+  getTeamMembers: async () =>
+    callApi<void, any[]>("/api/team", undefined, HTTP_METHOD.GET),
+
+  inviteTeamMember: async (data: {
+    email: string;
+    name: string;
+    role: string;
+  }) =>
+    callApi<{ email: string; name: string; role: string }, any>(
+      "/api/team/invite",
+      data,
+      HTTP_METHOD.POST
+    ),
+
+  updateTeamMember: async (userId: string, data: { role: string }) =>
+    callApi<{ role: string }, any>(
+      `/api/team/${userId}`,
+      data,
+      HTTP_METHOD.PATCH
+    ),
+
+  removeTeamMember: async (userId: string) =>
+    callApi<void, any>(`/api/team/${userId}`, undefined, HTTP_METHOD.DELETE),
 };

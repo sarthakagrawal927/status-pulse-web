@@ -1,9 +1,25 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useEffect, useState } from "react";
+import { API_FUNCTIONS } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { PlusCircle, Mail, Trash2, Shield } from "lucide-react";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -11,140 +27,202 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { UserRole, UserStatus } from "@/utils/constants";
+import { toast } from "sonner";
 
-interface Member {
+interface TeamMember {
   id: string;
   email: string;
-  role: "Admin" | "Editor" | "Viewer";
-  joinedAt: string;
+  name: string;
+  role: string;
+  status: string;
+  createdAt: string;
 }
 
-const Members = () => {
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [userRole] = useState<"Admin" | "Editor" | "Viewer">("Admin"); // This would come from auth context
-  const [members] = useState<Member[]>([
-    {
-      id: "1",
-      email: "john@example.com",
-      role: "Admin",
-      joinedAt: "2024-01-01",
-    },
-    {
-      id: "2",
-      email: "jane@example.com",
-      role: "Editor",
-      joinedAt: "2024-01-15",
-    },
-  ]);
+export default function TeamMembers() {
+  const { user } = useAuth();
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState({
+    email: "",
+    name: "",
+    role: UserRole.MEMBER,
+  });
 
-  const handleInviteMember = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMemberEmail) {
-      toast.error("Please enter an email address");
-      return;
+  const fetchMembers = async () => {
+    try {
+      const { data } = await API_FUNCTIONS.getTeamMembers();
+      setMembers(data);
+    } catch (error) {
+      toast.error("Failed to fetch team members");
+    } finally {
+      setLoading(false);
     }
-    toast.success(`Invitation sent to ${newMemberEmail}`);
-    setNewMemberEmail("");
   };
 
-  const handleRemoveMember = (email: string) => {
-    if (userRole !== "Admin") {
-      toast.error("Only admins can remove members");
-      return;
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  const handleInvite = async () => {
+    try {
+      await API_FUNCTIONS.inviteTeamMember(inviteForm);
+      toast.success("Invitation sent successfully");
+      setInviteDialogOpen(false);
+      fetchMembers();
+      setInviteForm({ email: "", name: "", role: UserRole.MEMBER });
+    } catch (error) {
+      toast.error("Failed to send invitation");
     }
-    toast.success(`Member ${email} removed`);
   };
 
-  const handleRoleChange = (memberId: string, newRole: string) => {
-    if (userRole !== "Admin") {
-      toast.error("Only admins can change roles");
-      return;
+  const handleUpdateRole = async (userId: string, role: string) => {
+    try {
+      await API_FUNCTIONS.updateTeamMember(userId, { role });
+      toast.success("Role updated successfully");
+      fetchMembers();
+    } catch (error) {
+      toast.error("Failed to update role");
     }
-    toast.success(`Role updated successfully`);
   };
+
+  const handleRemoveMember = async (userId: string) => {
+    if (!confirm("Are you sure you want to remove this member?")) return;
+
+    try {
+      await API_FUNCTIONS.removeTeamMember(userId);
+      toast.success("Member removed successfully");
+      fetchMembers();
+    } catch (error) {
+      toast.error("Failed to remove member");
+    }
+  };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto py-10">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Team Members</h1>
-        {userRole === "Admin" && (
-          <form onSubmit={handleInviteMember} className="flex gap-4">
-            <Input
-              type="email"
-              placeholder="Enter email address"
-              value={newMemberEmail}
-              onChange={(e) => setNewMemberEmail(e.target.value)}
-              className="w-64"
-            />
-            <Button type="submit">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Invite Member
-            </Button>
-          </form>
+        {user?.role === UserRole.ADMIN && (
+          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Invite Member</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite Team Member</DialogTitle>
+                <DialogDescription>
+                  Send an invitation to a new team member.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={inviteForm.email}
+                    onChange={(e) =>
+                      setInviteForm({ ...inviteForm, email: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    value={inviteForm.name}
+                    onChange={(e) =>
+                      setInviteForm({ ...inviteForm, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select
+                    value={inviteForm.role}
+                    onValueChange={(value) =>
+                      setInviteForm({ ...inviteForm, role: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                      <SelectItem value={UserRole.MEMBER}>Member</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleInvite}>Send Invitation</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Joined</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            {user?.role === UserRole.ADMIN && <TableHead>Actions</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {members.map((member) => (
             <TableRow key={member.id}>
-              <TableCell className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                {member.email}
-              </TableCell>
+              <TableCell>{member.name}</TableCell>
+              <TableCell>{member.email}</TableCell>
               <TableCell>
-                {userRole === "Admin" ? (
+                {user?.role === UserRole.ADMIN && member.id !== user.id ? (
                   <Select
-                    defaultValue={member.role}
-                    onValueChange={(value) => handleRoleChange(member.id, value)}
+                    value={member.role}
+                    onValueChange={(value) => handleUpdateRole(member.id, value)}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Admin">
-                        <span className="flex items-center gap-2">
-                          <Shield className="h-4 w-4" />
-                          Admin
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="Editor">Editor</SelectItem>
-                      <SelectItem value="Viewer">Viewer</SelectItem>
+                      <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                      <SelectItem value={UserRole.MEMBER}>Member</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    {member.role === "Admin" && <Shield className="h-4 w-4" />}
-                    {member.role}
-                  </span>
+                  member.role
                 )}
               </TableCell>
-              <TableCell>{new Date(member.joinedAt).toLocaleDateString()}</TableCell>
-              <TableCell className="text-right">
-                {userRole === "Admin" && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveMember(member.email)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
+              <TableCell>{member.status}</TableCell>
+              <TableCell>
+                {new Date(member.createdAt).toLocaleDateString()}
               </TableCell>
+              {user?.role === UserRole.ADMIN && (
+                <TableCell>
+                  {member.id !== user.id && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveMember(member.id)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
       </Table>
     </div>
   );
-};
-
-export default Members;
+}
