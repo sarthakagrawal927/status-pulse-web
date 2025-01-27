@@ -100,7 +100,6 @@ const SignUp = () => {
                 type="text"
                 value={formData.organizationName}
                 onChange={handleChange}
-                required
               />
             </div>
             <div className="space-y-2">

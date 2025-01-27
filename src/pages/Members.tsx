@@ -47,7 +47,6 @@ export default function TeamMembers() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: "",
-    name: "",
     role: UserRole.MEMBER,
   });
 
@@ -72,7 +71,7 @@ export default function TeamMembers() {
       toast.success("Invitation sent successfully");
       setInviteDialogOpen(false);
       fetchMembers();
-      setInviteForm({ email: "", name: "", role: UserRole.MEMBER });
+      setInviteForm({ email: "", role: UserRole.MEMBER });
     } catch (error) {
       toast.error("Failed to send invitation");
     }
@@ -129,16 +128,6 @@ export default function TeamMembers() {
                     value={inviteForm.email}
                     onChange={(e) =>
                       setInviteForm({ ...inviteForm, email: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    value={inviteForm.name}
-                    onChange={(e) =>
-                      setInviteForm({ ...inviteForm, name: e.target.value })
                     }
                   />
                 </div>
