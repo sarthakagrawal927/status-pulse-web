@@ -131,8 +131,12 @@ export const API_FUNCTIONS = {
     callApi<void, void>(`/api/team/${userId}`, undefined, HTTP_METHOD.DELETE),
 
   // Service management
-  getServices: async () =>
-    callApi<void, any[]>("/api/services", undefined, HTTP_METHOD.GET),
+  getServices: async (organizationId: string = "") =>
+    callApi<void, any[]>(
+      `/api/services?organizationId=${organizationId}`,
+      undefined,
+      HTTP_METHOD.GET
+    ),
 
   getServiceById: async (id: string) =>
     callApi<void, any>(`/api/services/${id}`, undefined, HTTP_METHOD.GET),
@@ -203,8 +207,21 @@ export const API_FUNCTIONS = {
     );
   },
 
+  // Organization
+  getOrganizationById: async (organizationId: string) => {
+    return callApi<void, any>(
+      `/api/organizations/${organizationId}`,
+      undefined,
+      HTTP_METHOD.GET
+    );
+  },
+
   // User Actions
-  getUserActions: async () => {
-    return callApi<void, any>("/api/actions", undefined, HTTP_METHOD.GET);
+  getUserActions: async (organizationId: string = "") => {
+    return callApi<void, any>(
+      `/api/actions?organizationId=${organizationId}`,
+      undefined,
+      HTTP_METHOD.GET
+    );
   },
 };

@@ -28,14 +28,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { UserRole, UserStatus } from "@/utils/constants";
 import { toast } from "sonner";
+import { UserRole } from "@/utils/constants";
+
+interface InviteFormData {
+  email: string;
+  role: UserRole;
+}
 
 interface TeamMember {
   id: string;
   email: string;
   name: string;
-  role: string;
+  role: UserRole;
   status: string;
   createdAt: string;
 }
@@ -45,7 +50,7 @@ export default function TeamMembers() {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({
+  const [inviteForm, setInviteForm] = useState<InviteFormData>({
     email: "",
     role: UserRole.MEMBER,
   });
@@ -67,7 +72,7 @@ export default function TeamMembers() {
 
   const handleInvite = async () => {
     try {
-      const {err} = await API_FUNCTIONS.inviteTeamMember(inviteForm);
+      const { err } = await API_FUNCTIONS.inviteTeamMember(inviteForm);
       if (err) throw err;
       toast.success("Invitation sent successfully");
       setInviteDialogOpen(false);
@@ -78,7 +83,7 @@ export default function TeamMembers() {
     }
   };
 
-  const handleUpdateRole = async (userId: string, role: string) => {
+  const handleUpdateRole = async (userId: string, role: UserRole) => {
     try {
       await API_FUNCTIONS.updateTeamMember(userId, { role });
       toast.success("Role updated successfully");

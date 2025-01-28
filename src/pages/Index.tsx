@@ -1,5 +1,4 @@
 import { OrganizationOverview } from "@/components/OrganizationOverview";
-import { ServiceCard } from "@/components/ServiceCard";
 import { StatusOverview } from "@/components/StatusOverview";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -10,12 +9,15 @@ import { API_FUNCTIONS } from "@/lib/api";
 import { type Service, type UserAction } from "@/types";
 import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Users, Server, Bell } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 const Index = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [actions, setActions] = useState<UserAction[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const { organizationId } = useParams();
 
   useEffect(() => {
     fetchData();
@@ -24,8 +26,8 @@ const Index = () => {
   const fetchData = async () => {
     try {
       const [servicesResponse, actionsResponse] = await Promise.all([
-        API_FUNCTIONS.getServices(),
-        API_FUNCTIONS.getUserActions()
+        API_FUNCTIONS.getServices(organizationId),
+        API_FUNCTIONS.getUserActions(organizationId)
       ]);
 
       if (servicesResponse.data) {
@@ -156,7 +158,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <div className="container py-8">
         <div className="max-w-3xl mx-auto space-y-8">
-          <OrganizationOverview services={services} />
+          <OrganizationOverview services={services} organizationId={organizationId} />
           <StatusOverview services={services} />
 
           <Tabs defaultValue="services" className="space-y-4">
