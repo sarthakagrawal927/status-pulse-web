@@ -7,7 +7,7 @@ import {
 } from "@/types";
 import axios, { AxiosError, AxiosResponse } from "axios";
 
-const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
+const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export const HTTP_METHOD = {
   GET: "GET",
