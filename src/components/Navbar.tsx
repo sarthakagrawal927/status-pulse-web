@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Building, LogIn, LogOut, Settings, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
+import { ThemeToggle } from "./theme-toggle";
 
 export const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -20,6 +21,7 @@ export const Navbar = () => {
           StatusPulse
         </Link>
         <div className="flex items-center gap-4">
+          <ThemeToggle />
           {!isAuthenticated ? (
             <>
               <Link to="/signup">
