@@ -1,55 +1,44 @@
 import { OrganizationOverview } from "@/components/OrganizationOverview";
 import { ServiceCard } from "@/components/ServiceCard";
 import { StatusOverview } from "@/components/StatusOverview";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { INCIDENT_STATUSES, type IncidentImpact } from "@/constants/incident";
 import { API_FUNCTIONS } from "@/lib/api";
-import { type Service } from "@/types";
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { type Service, type UserAction } from "@/types";
+import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Users, Server, Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const Index = () => {
   const [services, setServices] = useState<Service[]>([]);
+  const [actions, setActions] = useState<UserAction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchServices();
+    fetchData();
   }, []);
 
-  const fetchServices = async () => {
+  const fetchData = async () => {
     try {
-      const response = await API_FUNCTIONS.getServices();
-      if (response.data) {
-        setServices(response.data);
+      const [servicesResponse, actionsResponse] = await Promise.all([
+        API_FUNCTIONS.getServices(),
+        API_FUNCTIONS.getUserActions()
+      ]);
+
+      if (servicesResponse.data) {
+        setServices(servicesResponse.data);
+      }
+      if (actionsResponse.data) {
+        setActions(actionsResponse.data.actions);
       }
     } catch (error) {
-      console.error("Error fetching services:", error);
-      toast.error("Failed to fetch services");
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case INCIDENT_STATUSES.INVESTIGATING:
-        return "bg-yellow-500";
-      case INCIDENT_STATUSES.IDENTIFIED:
-        return "bg-orange-500";
-      case INCIDENT_STATUSES.MONITORING:
-        return "bg-blue-500";
-      case INCIDENT_STATUSES.RESOLVED:
-        return "bg-green-500";
-      default:
-        return "bg-gray-500";
     }
   };
 
@@ -81,6 +70,70 @@ const Index = () => {
     }
   };
 
+  const getActionIcon = (actionType: string) => {
+    switch (actionType) {
+      case 'INCIDENT_CREATED':
+      case 'INCIDENT_UPDATED':
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'INCIDENT_RESOLVED':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'SERVICE_STATUS_CHANGED':
+        return <Server className="h-4 w-4 text-blue-500" />;
+      case 'MAINTENANCE_SCHEDULED':
+      case 'MAINTENANCE_STARTED':
+      case 'MAINTENANCE_COMPLETED':
+        return <Clock className="h-4 w-4 text-orange-500" />;
+      case 'MEMBER_INVITED':
+      case 'MEMBER_JOINED':
+      case 'MEMBER_REMOVED':
+      case 'MEMBER_LEFT':
+      case 'ROLE_UPDATED':
+        return <Users className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Bell className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getActionBadge = (actionType: string) => {
+    let variant: "default" | "secondary" | "destructive" | "outline" = "default";
+    let className = "font-semibold";
+
+    switch (actionType) {
+      case 'INCIDENT_CREATED':
+        variant = "destructive";
+        break;
+      case 'INCIDENT_RESOLVED':
+        className = "bg-green-500 text-white";
+        break;
+      case 'MAINTENANCE_SCHEDULED':
+      case 'MAINTENANCE_STARTED':
+        variant = "secondary";
+        className = "bg-orange-500 text-white";
+        break;
+      case 'MAINTENANCE_COMPLETED':
+        variant = "secondary";
+        className = "bg-blue-500 text-white";
+        break;
+      case 'MEMBER_INVITED':
+      case 'MEMBER_JOINED':
+        variant = "secondary";
+        className = "bg-purple-500 text-white";
+        break;
+      case 'MEMBER_REMOVED':
+      case 'MEMBER_LEFT':
+        variant = "destructive";
+        break;
+      default:
+        variant = "outline";
+    }
+
+    return (
+      <Badge variant={variant} className={className}>
+        {actionType.replace(/_/g, ' ')}
+      </Badge>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -99,82 +152,135 @@ const Index = () => {
     );
   }
 
-  const activeIncidents = services
-    .flatMap(service => service.incidents || [])
-    .filter(incident => incident.status !== INCIDENT_STATUSES.RESOLVED)
-    .sort((a, b) => {
-      // Sort by impact first
-      const impactOrder = { CRITICAL: 0, MAJOR: 1, MINOR: 2, NONE: 3 };
-      const impactDiff = impactOrder[a.impact] - impactOrder[b.impact];
-      if (impactDiff !== 0) return impactDiff;
-      // Then by most recent
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    });
-
   return (
     <div className="min-h-screen bg-background">
       <div className="container py-8">
         <div className="max-w-3xl mx-auto space-y-8">
-          <OrganizationOverview  services={services} />
+          <OrganizationOverview services={services} />
           <StatusOverview services={services} />
-          
-          {/* Active Incidents Section */}
-          {activeIncidents.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold">Active Incidents</h2>
-                <Badge variant="outline" className="text-sm">
-                  {activeIncidents.length} Active
-                </Badge>
-              </div>
-              <Accordion type="single" collapsible className="w-full">
-                {activeIncidents.map((incident) => (
-                  <AccordionItem key={incident.id} value={incident.id}>
-                    <AccordionTrigger className="hover:no-underline">
-                      <div className="flex items-center gap-3 text-left">
-                        {/* <Badge variant={incident.type === INCIDENT_TYPES.INCIDENT ? "destructive" : "secondary"}>
-                          {incident.type === INCIDENT_TYPES.INCIDENT ? "Incident" : "Maintenance"}
-                        </Badge> */}
-                        {getImpactBadge(incident.impact)}
-                        <span className="font-medium">{incident.title}</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-4 pt-2">
-                        <p className="text-sm text-muted-foreground">{incident.description}</p>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span>Started: {new Date(incident.createdAt).toLocaleString()}</span>
-                          <span>•</span>
-                          <span>Service: {services.find(s => s.id === incident.serviceId)?.name}</span>
-                        </div>
-                        {incident.updates?.map((update) => (
-                          <div key={update.id} className="border-l-2 border-primary pl-4">
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(update.status)}
-                              <span className="font-medium capitalize">{update.status.toLowerCase()}</span>
-                              <span className="text-sm text-muted-foreground">
-                                {new Date(update.createdAt).toLocaleString()}
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm">{update.message}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </div>
-          )}
 
-          <div className="grid gap-4">
-            {services.map((service) => (
-              <ServiceCard 
-                key={service.id} 
-                service={service} 
-              />
-            ))}
-          </div>
+          <Tabs defaultValue="services" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="services">Services & Incidents</TabsTrigger>
+              <TabsTrigger value="actions">Activity Timeline</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="services" className="space-y-6">
+              <div className="grid gap-6">
+                {services.map((service) => {
+                  const activeIncidents = service.incidents?.filter(
+                    incident => incident.status !== INCIDENT_STATUSES.RESOLVED
+                  ) || [];
+
+                  return (
+                    <Card key={service.id} className="overflow-hidden">
+                      <div className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold">{service.name}</h3>
+                            <p className="text-sm text-muted-foreground">{service.description}</p>
+                          </div>
+                          <Badge 
+                            variant={service.status === 'OPERATIONAL' ? 'outline' : 'destructive'}
+                            className={
+                              service.status === 'OPERATIONAL' 
+                                ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 hover:text-green-500'
+                                : 'bg-red-500'
+                            }
+                          >
+                            {service.status.replace(/_/g, ' ')}
+                          </Badge>
+                        </div>
+
+                        {activeIncidents.length > 0 && (
+                          <div className="space-y-4">
+                            {activeIncidents.map((incident) => {
+                              const latestUpdate = incident.updates?.[0];
+                              
+                              return (
+                                <div 
+                                  key={incident.id} 
+                                  className={`
+                                    rounded-lg border p-4 space-y-3
+                                    ${incident.impact === 'CRITICAL' ? 'border-red-500/50 bg-red-500/5' :
+                                      incident.impact === 'MAJOR' ? 'border-orange-500/50 bg-orange-500/5' :
+                                      'border-yellow-500/50 bg-yellow-500/5'}
+                                  `}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      {getImpactBadge(incident.impact)}
+                                      <h4 className="font-medium">{incident.title}</h4>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      {new Date(incident.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  
+                                  {latestUpdate && (
+                                    <div className="flex items-start gap-2 text-sm">
+                                      {getStatusIcon(latestUpdate.status)}
+                                      <div>
+                                        <p className="font-medium capitalize mb-1">
+                                          {latestUpdate.status.toLowerCase()}
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                          {latestUpdate.message}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                          {new Date(latestUpdate.createdAt).toLocaleString()}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {activeIncidents.length === 0 && (
+                          <div className="text-sm text-muted-foreground mt-2">
+                            No active incidents
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="actions">
+              <Card className="p-6">
+                <h2 className="text-2xl font-bold mb-6">Activity Timeline</h2>
+                <div className="space-y-6">
+                  {actions.map((action) => (
+                    <div key={action.id} className="border-l-2 border-primary pl-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          {getActionIcon(action.actionType)}
+                          {getActionBadge(action.actionType)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{action.description}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>{new Date(action.createdAt).toLocaleString()}</span>
+                          {action.metadata && (
+                            <span className="text-xs text-muted-foreground">
+                              {JSON.stringify(action.metadata)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {actions.length === 0 && (
+                    <p className="text-center text-muted-foreground">No activities found</p>
+                  )}
+                </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

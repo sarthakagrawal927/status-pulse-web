@@ -202,4 +202,9 @@ export const API_FUNCTIONS = {
       HTTP_METHOD.GET
     );
   },
+
+  // User Actions
+  getUserActions: async () => {
+    return callApi<void, any>("/api/actions", undefined, HTTP_METHOD.GET);
+  },
 };

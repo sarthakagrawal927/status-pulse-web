@@ -59,3 +59,29 @@ export type CreateServiceData = {
   status: ServiceStatus;
   organizationId?: string;
 };
+
+export type ActionType =
+  | "INCIDENT_CREATED"
+  | "INCIDENT_UPDATED"
+  | "INCIDENT_RESOLVED"
+  | "SERVICE_STATUS_CHANGED"
+  | "MAINTENANCE_SCHEDULED"
+  | "MAINTENANCE_STARTED"
+  | "MAINTENANCE_COMPLETED"
+  | "MEMBER_INVITED"
+  | "MEMBER_JOINED"
+  | "MEMBER_REMOVED"
+  | "MEMBER_LEFT"
+  | "ROLE_UPDATED";
+
+export interface UserAction {
+  id: string;
+  actionType: ActionType;
+  description: string;
+  metadata?: JSON;
+  userId: string;
+  organizationId: string;
+  serviceId?: string;
+  incidentId?: string;
+  createdAt: string;
+}
