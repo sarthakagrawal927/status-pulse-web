@@ -1,69 +1,132 @@
-# Welcome to your Lovable project
+# Service Status Tracker Web
 
-## Project info
+A modern, responsive web application for managing service status tracking and incident reporting. Built with React, TypeScript, and Shadcn UI components.
 
-**URL**: https://lovable.dev/projects/176c229a-697f-4b55-a160-37e1f9905bcb
+## Features
 
-## How can I edit this code?
+- Dark/Light mode support
+- Secure authentication system
+- Real-time service status dashboard
+- Incident management interface
+- Team management with role-based access
+- Responsive design for all devices
+- Modern UI with Shadcn components
 
-There are several ways of editing your application.
+## Prerequisites
 
-**Use Lovable**
+- Node.js >= 18.18.0
+- npm or yarn
+- Backend API running (see server README)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/176c229a-697f-4b55-a160-37e1f9905bcb) and start prompting.
+## Setup
 
-Changes made via Lovable will be committed automatically to this repo.
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-**Use your preferred IDE**
+3. Create a `.env` file in the root directory:
+   ```
+   # API Configuration
+   VITE_API_URL=http://localhost:3000
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Technology Stack
 
-Follow these steps:
+- **Framework**: React with TypeScript
+- **Build Tool**: Vite
+- **UI Components**: Shadcn UI
+- **Styling**: Tailwind CSS
+- **State Management**: React Query
+- **Form Handling**: React Hook Form
+- **Authentication**: JWT with HTTP-only cookies
+- **HTTP Client**: Axios
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Project Structure
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+src/
+├── components/         # Reusable UI components
+│   ├── ui/            # Shadcn UI components
+│   └── ...            # Custom components
+├── hooks/             # Custom React hooks
+├── lib/               # Utility functions and API client
+├── pages/             # Page components
+├── types/             # TypeScript type definitions
+└── App.tsx            # Main application component
 ```
 
-**Edit a file directly in GitHub**
+## Available Scripts
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
 
-**Use GitHub Codespaces**
+## Environment Variables
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| VITE_API_URL | Backend API URL | http://localhost:3000 |
 
-## What technologies are used for this project?
+## Deployment
 
-This project is built with .
+The web application is configured for deployment on platforms like Vercel, Netlify, or Render. Make sure to:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Set the appropriate environment variables
+2. Configure build settings:
+   - Build command: `npm run build`
+   - Output directory: `dist`
+   - Install command: `npm install`
 
-## How can I deploy this project?
+## Features in Detail
 
-Simply open [Lovable](https://lovable.dev/projects/176c229a-697f-4b55-a160-37e1f9905bcb) and click on Share -> Publish.
+### Authentication
+- Secure login/signup system
+- Protected routes
+- Role-based access control
+- Persistent sessions
 
-## I want to use a custom domain - is that possible?
+### Service Status Management
+- Real-time status updates
+- Historical status data
+- Custom status types
+- Service grouping
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Incident Management
+- Create and track incidents
+- Real-time incident updates
+- Incident history
+- Impact assessment
+
+### Team Management
+- Invite team members
+- Role management
+- Activity tracking
+- Team permissions
+
+## Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## Related Projects
+
+- [Service Status Tracker API](../server/README.md) - Backend API
