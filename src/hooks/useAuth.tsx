@@ -49,11 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           isLoading: false,
         });
       } else {
-        setState({
-          user: null,
-          isAuthenticated: false,
-          isLoading: false,
-        });
+        throw new Error("User not found");
       }
     } catch (error) {
       setState({

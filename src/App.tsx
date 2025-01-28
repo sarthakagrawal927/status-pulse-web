@@ -10,6 +10,7 @@ import Members from "./pages/Members";
 import Incidents from "./pages/Incidents";
 import { Navbar } from "./components/Navbar";
 import { AuthProvider } from "./hooks/useAuth";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -22,11 +23,16 @@ const App = () => (
         <BrowserRouter>
           <Navbar />
           <Routes>
-            <Route path="/" element={<Index />} />
+            {/* Public Routes */}
             <Route path="/signup" element={<SignUp />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/members" element={<Members />} />
-            <Route path="/incidents" element={<Incidents />} />
+
+            {/* Protected Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/members" element={<Members />} />
+              <Route path="/incidents" element={<Incidents />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </AuthProvider>

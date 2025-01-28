@@ -67,7 +67,8 @@ export default function TeamMembers() {
 
   const handleInvite = async () => {
     try {
-      await API_FUNCTIONS.inviteTeamMember(inviteForm);
+      const {err} = await API_FUNCTIONS.inviteTeamMember(inviteForm);
+      if (err) throw err;
       toast.success("Invitation sent successfully");
       setInviteDialogOpen(false);
       fetchMembers();
