@@ -1,0 +1,18 @@
+export const ACTION_TYPES = {
+  // Incident related actions
+  INCIDENT_CREATED: 'INCIDENT_CREATED',
+  INCIDENT_UPDATED: 'INCIDENT_UPDATED',
+  INCIDENT_RESOLVED: 'INCIDENT_RESOLVED',
+  
+  // Service related actions
+  SERVICE_STATUS_CHANGED: 'SERVICE_STATUS_CHANGED',
+  
+  // Member related actions
+  MEMBER_INVITED: 'MEMBER_INVITED',
+  MEMBER_JOINED: 'MEMBER_JOINED',
+  MEMBER_REMOVED: 'MEMBER_REMOVED',
+  MEMBER_LEFT: 'MEMBER_LEFT',
+  ROLE_UPDATED: 'ROLE_UPDATED',
+} as const;
+
+export type ActionType = typeof ACTION_TYPES[keyof typeof ACTION_TYPES];

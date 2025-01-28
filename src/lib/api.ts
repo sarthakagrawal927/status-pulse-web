@@ -1,26 +1,13 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
-import { getAuthHeader } from "./token";
-import { INCIDENT_STATUSES, INCIDENT_TYPES } from "@/constants/incident";
 import {
   type CreateIncidentData,
-  type CreateUpdateData,
   type CreateServiceData,
+  type CreateUpdateData,
   Incident,
   IncidentUpdate,
 } from "@/types";
+import axios, { AxiosError, AxiosResponse } from "axios";
 
-const baseUrl = "http://localhost:3000";
-
-const handleAxiosError = (error: AxiosError) => {
-  if (error.response) {
-    throw new Error(
-      `Request failed with status ${error.response.status}: ${
-        (error.response.data as any).message || "Unknown error"
-      }`
-    );
-  }
-  throw error;
-};
+const baseUrl = process.env.REACT_APP_API_URL || "http://localhost:3000";
 
 export const HTTP_METHOD = {
   GET: "GET",

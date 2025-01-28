@@ -5,44 +5,15 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { INCIDENT_STATUSES, type IncidentImpact } from "@/constants/incident";
+import { ACTION_TYPES } from "@/constants/action";
 import { API_FUNCTIONS } from "@/lib/api";
 import { type Service, type UserAction } from "@/types";
 import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Users, Server, Bell } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-
-const Index = () => {
-  const [services, setServices] = useState<Service[]>([]);
-  const [actions, setActions] = useState<UserAction[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const { organizationId } = useParams();
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const [servicesResponse, actionsResponse] = await Promise.all([
-        API_FUNCTIONS.getServices(organizationId),
-        API_FUNCTIONS.getUserActions(organizationId)
-      ]);
-
-      if (servicesResponse.data) {
-        setServices(servicesResponse.data);
-      }
-      if (actionsResponse.data) {
-        setActions(actionsResponse.data.actions);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to fetch data");
-    } finally {
-      setLoading(false);
-    }
-  };
+import { useMultiSocket } from "@/hooks/useSocket";
+import { useAuth } from "@/hooks/useAuth";
 
   const getImpactBadge = (impact: IncidentImpact) => {
     switch (impact) {
@@ -74,22 +45,18 @@ const Index = () => {
 
   const getActionIcon = (actionType: string) => {
     switch (actionType) {
-      case 'INCIDENT_CREATED':
-      case 'INCIDENT_UPDATED':
+      case ACTION_TYPES.INCIDENT_CREATED:
+      case ACTION_TYPES.INCIDENT_UPDATED:
         return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      case 'INCIDENT_RESOLVED':
+      case ACTION_TYPES.INCIDENT_RESOLVED:
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      case 'SERVICE_STATUS_CHANGED':
+      case ACTION_TYPES.SERVICE_STATUS_CHANGED:
         return <Server className="h-4 w-4 text-blue-500" />;
-      case 'MAINTENANCE_SCHEDULED':
-      case 'MAINTENANCE_STARTED':
-      case 'MAINTENANCE_COMPLETED':
-        return <Clock className="h-4 w-4 text-orange-500" />;
-      case 'MEMBER_INVITED':
-      case 'MEMBER_JOINED':
-      case 'MEMBER_REMOVED':
-      case 'MEMBER_LEFT':
-      case 'ROLE_UPDATED':
+      case ACTION_TYPES.MEMBER_INVITED:
+      case ACTION_TYPES.MEMBER_JOINED:
+      case ACTION_TYPES.MEMBER_REMOVED:
+      case ACTION_TYPES.MEMBER_LEFT:
+      case ACTION_TYPES.ROLE_UPDATED:
         return <Users className="h-4 w-4 text-purple-500" />;
       default:
         return <Bell className="h-4 w-4 text-gray-500" />;
@@ -101,28 +68,19 @@ const Index = () => {
     let className = "font-semibold";
 
     switch (actionType) {
-      case 'INCIDENT_CREATED':
+      case ACTION_TYPES.INCIDENT_CREATED:
         variant = "destructive";
         break;
-      case 'INCIDENT_RESOLVED':
+      case ACTION_TYPES.INCIDENT_RESOLVED:
         className = "bg-green-500 text-white";
         break;
-      case 'MAINTENANCE_SCHEDULED':
-      case 'MAINTENANCE_STARTED':
-        variant = "secondary";
-        className = "bg-orange-500 text-white";
-        break;
-      case 'MAINTENANCE_COMPLETED':
-        variant = "secondary";
-        className = "bg-blue-500 text-white";
-        break;
-      case 'MEMBER_INVITED':
-      case 'MEMBER_JOINED':
+      case ACTION_TYPES.MEMBER_INVITED:
+      case ACTION_TYPES.MEMBER_JOINED:
         variant = "secondary";
         className = "bg-purple-500 text-white";
         break;
-      case 'MEMBER_REMOVED':
-      case 'MEMBER_LEFT':
+      case ACTION_TYPES.MEMBER_REMOVED:
+      case ACTION_TYPES.MEMBER_LEFT:
         variant = "destructive";
         break;
       default:
@@ -135,6 +93,82 @@ const Index = () => {
       </Badge>
     );
   };
+
+const Index = () => {
+  const [services, setServices] = useState<Service[]>([]);
+  const [actions, setActions] = useState<UserAction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const {user} = useAuth();
+  const { organizationId } = useParams();
+
+  // Handle real-time updates for both actions and incidents
+  useMultiSocket({
+    organizationId: user?.organization?.id || organizationId || "",
+    events: [
+      {
+        type: "action",
+        callback: (action) => {
+          // Update actions list
+          setActions(prev => [action.data, ...prev]);
+
+          // Show toast notification
+          toast(action.data.description, {
+            description: new Date(action.data.createdAt).toLocaleString(),
+          });
+
+          // Refresh services data if the action is related to services
+          if (
+            action.data.actionType === ACTION_TYPES.SERVICE_STATUS_CHANGED ||
+            action.data.actionType === ACTION_TYPES.INCIDENT_CREATED ||
+            action.data.actionType === ACTION_TYPES.INCIDENT_UPDATED ||
+            action.data.actionType === ACTION_TYPES.INCIDENT_RESOLVED
+          ) {
+            fetchData(); // can optimise this to do state updates, instead of re-fetching the data
+          }
+        },
+      },
+      // {
+      //   type: "incident",
+      //   callback: (incident) => {
+      //     // Refresh services data when incident is updated
+      //     fetchData();
+          
+      //     // Show toast notification
+      //     toast.info(`Incident Update: ${incident.data.title}`, {
+      //       description: incident.data.description,
+      //     });
+      //   },
+      // },
+    ],
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [servicesResponse, actionsResponse] = await Promise.all([
+        API_FUNCTIONS.getServices(organizationId),
+        API_FUNCTIONS.getUserActions(organizationId)
+      ]);
+
+      if (servicesResponse.data) {
+        setServices(servicesResponse.data);
+      }
+      if (actionsResponse.data) {
+        setActions(actionsResponse.data.actions);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to fetch data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
 
   if (loading) {
     return (

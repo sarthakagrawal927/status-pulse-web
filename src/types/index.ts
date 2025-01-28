@@ -4,6 +4,7 @@ import {
   type IncidentType,
   type IncidentImpact,
 } from "@/constants/incident";
+import { type ActionType } from "@/constants/action";
 
 export interface IncidentUpdate {
   id: string;
@@ -60,19 +61,7 @@ export type CreateServiceData = {
   organizationId?: string;
 };
 
-export type ActionType =
-  | "INCIDENT_CREATED"
-  | "INCIDENT_UPDATED"
-  | "INCIDENT_RESOLVED"
-  | "SERVICE_STATUS_CHANGED"
-  | "MAINTENANCE_SCHEDULED"
-  | "MAINTENANCE_STARTED"
-  | "MAINTENANCE_COMPLETED"
-  | "MEMBER_INVITED"
-  | "MEMBER_JOINED"
-  | "MEMBER_REMOVED"
-  | "MEMBER_LEFT"
-  | "ROLE_UPDATED";
+export type { ActionType } from "@/constants/action";
 
 export interface UserAction {
   id: string;
