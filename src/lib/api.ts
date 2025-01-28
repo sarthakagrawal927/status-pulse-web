@@ -211,4 +211,12 @@ export const API_FUNCTIONS = {
       HTTP_METHOD.GET
     );
   },
+
+  sendOTP: async (email: string) => {
+    return await callApi(`/api/auth/send-otp`, { email });
+  },
+
+  verifyOTP: async (email: string, otp: string) => {
+    return await callApi(`/api/auth/verify-otp`, { email, otp });
+  },
 };
