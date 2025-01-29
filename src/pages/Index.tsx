@@ -14,6 +14,7 @@ import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useMultiSocket } from "@/hooks/useSocket";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
   const getImpactBadge = (impact: IncidentImpact) => {
     switch (impact) {
@@ -117,14 +118,46 @@ const Index = () => {
             description: new Date(action.data.createdAt).toLocaleString(),
           });
 
-          // Refresh services data if the action is related to services
-          if (
-            action.data.actionType === ACTION_TYPES.SERVICE_STATUS_CHANGED ||
+          // Update services state based on action type
+          if (action.data.actionType === ACTION_TYPES.SERVICE_STATUS_CHANGED) {
+            setServices(prev => prev.map(service => {
+              if (service.id === action.data.serviceId) {
+                return {
+                  ...service,
+                  status: action.data.metadata?.status || service.status
+                };
+              }
+              return service;
+            }));
+          } else if (
             action.data.actionType === ACTION_TYPES.INCIDENT_CREATED ||
             action.data.actionType === ACTION_TYPES.INCIDENT_UPDATED ||
             action.data.actionType === ACTION_TYPES.INCIDENT_RESOLVED
           ) {
-            fetchData(); // can optimise this to do state updates, instead of re-fetching the data
+            setServices(prev => prev.map(service => {
+              if (service.id === action.data.serviceId) {
+                const updatedIncidents = service.incidents || [];
+
+                if (action.data.actionType === ACTION_TYPES.INCIDENT_CREATED && action.data.metadata?.incident) {
+                  // Add new incident
+                  updatedIncidents.unshift(action.data.metadata.incident);
+                } else {
+                  // Update existing incident
+                  const incidentIndex = updatedIncidents.findIndex(inc => inc.id === action.data.incidentId);
+                  console.log({incidentIndex})
+                  if (incidentIndex !== -1) {
+                    updatedIncidents[incidentIndex].status = action.data.metadata.status;
+                    // updatedIncidents[incidentIndex].updates = [...(updatedIncidents[incidentIndex].updates || []), action.data.metadata.update];
+                  }
+                }
+
+                return {
+                  ...service,
+                  incidents: updatedIncidents
+                };
+              }
+              return service;
+            }));
           }
         },
       },
@@ -133,7 +166,7 @@ const Index = () => {
       //   callback: (incident) => {
       //     // Refresh services data when incident is updated
       //     fetchData();
-          
+
       //     // Show toast notification
       //     toast.info(`Incident Update: ${incident.data.title}`, {
       //       description: incident.data.description,
@@ -232,7 +265,7 @@ const Index = () => {
                           <div className="space-y-4">
                             {activeIncidents.map((incident) => {
                               const latestUpdate = incident.updates?.[0];
-                              
+
                               return (
                                 <div 
                                   key={incident.id} 
@@ -246,13 +279,25 @@ const Index = () => {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                       {getImpactBadge(incident.impact)}
+                                      <Badge
+                                        variant="secondary"
+                                        className={cn(
+                                          "capitalize",
+                                          incident.status === INCIDENT_STATUSES.INVESTIGATING && "bg-yellow-500/20 text-yellow-600",
+                                          incident.status === INCIDENT_STATUSES.IDENTIFIED && "bg-orange-500/20 text-orange-600",
+                                          incident.status === INCIDENT_STATUSES.MONITORING && "bg-blue-500/20 text-blue-600",
+                                          incident.status === INCIDENT_STATUSES.RESOLVED && "bg-green-500/20 text-green-600"
+                                        )}
+                                      >
+                                        {incident.status.toLowerCase()}
+                                      </Badge>
                                       <h4 className="font-medium">{incident.title}</h4>
                                     </div>
                                     <span className="text-xs text-muted-foreground">
                                       {new Date(incident.createdAt).toLocaleDateString()}
                                     </span>
                                   </div>
-                                  
+
                                   {latestUpdate && (
                                     <div className="flex items-start gap-2 text-sm">
                                       {getStatusIcon(latestUpdate.status)}
