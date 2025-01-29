@@ -74,3 +74,28 @@ export interface UserAction {
   incidentId?: string;
   createdAt: string;
 }
+
+export interface Maintenance {
+  id: string;
+  start: string;
+  end: string;
+  notes?: string;
+  service: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface MaintenanceFormData {
+  start: Date;
+  end: Date;
+  notes?: string;
+}
+
+export interface ServiceWithMaintenance {
+  ServiceMaintenance: Maintenance[];
+  name: string;
+  status: string;
+  id: string;
+  createdAt: string;
+}

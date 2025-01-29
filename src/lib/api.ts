@@ -4,6 +4,9 @@ import {
   type CreateUpdateData,
   Incident,
   IncidentUpdate,
+  type Maintenance,
+  type MaintenanceFormData,
+  type ServiceWithMaintenance,
 } from "@/types";
 import axios, { AxiosError, AxiosResponse } from "axios";
 
@@ -193,6 +196,40 @@ export const API_FUNCTIONS = {
       HTTP_METHOD.GET
     );
   },
+
+  // Maintenance management
+  getMaintenances: async () =>
+    callApi<void, ServiceWithMaintenance[]>(
+      `/api/maintenance`,
+      undefined,
+      HTTP_METHOD.GET
+    ),
+
+  createMaintenance: async (
+    data: MaintenanceFormData
+  ) =>
+    callApi<MaintenanceFormData, Maintenance>(
+      "/api/maintenance",
+      data,
+      HTTP_METHOD.POST
+    ),
+
+  updateMaintenance: async (
+    id: string,
+    data: MaintenanceFormData
+  ) =>
+    callApi<MaintenanceFormData, Maintenance>(
+      `/api/maintenance/${id}`,
+      data,
+      HTTP_METHOD.PATCH
+    ),
+
+  deleteMaintenance: async (id: string) =>
+    callApi<void, void>(
+      `/api/maintenance/${id}`,
+      undefined,
+      HTTP_METHOD.DELETE
+    ),
 
   // Organization
   getOrganizationById: async (organizationId: string) => {

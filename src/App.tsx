@@ -12,6 +12,7 @@ import { Navbar } from "./components/Navbar";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
+import ServiceMaintenance from "./pages/ServiceMaintenance";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/members" element={<Members />} />
                 <Route path="/incidents" element={<Incidents />} />
+                <Route path="/maintenance" element={<ServiceMaintenance />} />
               </Route>
             </Routes>
           </BrowserRouter>

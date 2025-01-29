@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
-import { Building, LogIn, LogOut, Settings, UserPlus } from "lucide-react";
+import { Building, CalendarDays, LogIn, LogOut, Settings, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { ThemeToggle } from "./theme-toggle";
@@ -59,10 +59,16 @@ export const Navbar = () => {
                 <DropdownMenuItem asChild>
                   <Link to="/incidents" className="flex items-center gap-2">
                     <Settings className="h-4 w-4" />
-                    Services
+                    Incidents
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={logout} className="text-destructive">
+                <DropdownMenuItem asChild>
+                  <Link to="/maintenance" className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    Maintenance
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={logout} className="flex items-center gap-2">
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
