@@ -23,7 +23,7 @@ export const useSocket = ({
   useEffect(() => {
     // Initialize socket connection
     socket.current = io(
-      process.env.REACT_APP_API_URL || "http://localhost:3000"
+      import.meta.env.VITE_API_URL || "http://localhost:3000"
     );
 
     // Clean up on unmount
