@@ -22,8 +22,8 @@ const Login = () => {
     const { data, err } = await API_FUNCTIONS.login(email, password);
 
     if (data) {
-      // const { token } = data;
-      // setToken(token);
+      const { token } = data;
+      setToken(token);
       await refreshAuth(); // Refresh auth state after setting token
       toast.success("Logged in successfully!");
       history("/");
